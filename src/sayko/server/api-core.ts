@@ -704,6 +704,9 @@ app.get('/api/poll', (req: Req, res: Res) => {
 
 app.post('/api/poll/vote', (req: Req, res: Res) => {
   const { userId, userName, horseId, courseNumber, horseName } = req.body;
+  // voteKey/lockKey are scoped to the course's current horse list, so changing horses resets votes
+  const voteKey = String(req.body.voteKey || horseId);
+  const lockKey = String(req.body.lockKey || userId);
   if (!userId || !horseId) {
     return res.status(400).json({ success: false, message: 'شناسه کاربر یا اسب نامعتبر است.' });
   }
@@ -713,18 +716,18 @@ app.post('/api/poll/vote', (req: Req, res: Res) => {
   if (!db.userPollVotes) db.userPollVotes = {};
 
   // Single-vote rule: each user is strictly allowed to vote only once
-  if (db.userPollVotes[userId]) {
+  if (db.userPollVotes[lockKey]) {
     return res.status(400).json({
       success: false,
       message: 'شما قبلاً رأی خود را ثبت کرده‌اید و بر اساس قوانین، امکان تغییر یا ثبت مجدد وجود ندارد.',
-      userVote: db.userPollVotes[userId],
+      userVote: db.userPollVotes[lockKey],
     });
   }
 
   const nowTimestamp = Date.now();
   const timeFa = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit' }).format(new Date());
 
-  db.pollVotes[horseId] = (db.pollVotes[horseId] || 0) + 1;
+  db.pollVotes[voteKey] = (db.pollVotes[voteKey] || 0) + 1;
   const userVote = {
     userId,
     userName: userName || 'کاربر',
@@ -734,7 +737,7 @@ app.post('/api/poll/vote', (req: Req, res: Res) => {
     votedAt: timeFa,
     timestamp: nowTimestamp,
   };
-  db.userPollVotes[userId] = userVote;
+  db.userPollVotes[lockKey] = userVote;
 
   saveDatabase(db);
   res.json({ success: true, pollVotes: db.pollVotes, userVote });

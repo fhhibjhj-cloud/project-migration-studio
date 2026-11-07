@@ -64,11 +64,11 @@ export const Poll: React.FC<PollProps> = ({
   // 2. AUTHENTIC REAL PERCENTAGE CALCULATION
   const { horseStats, totalCourseVotes } = useMemo(() => {
     const totalVotes = currentCourseHorses.reduce((sum, h) => {
-      return sum + (store.pollVotes[h.id] || 0);
+      return sum + (store.getPollVoteCount(selectedCourse?.number || selectedCourseNumber, h.id));
     }, 0);
 
     const stats = currentCourseHorses.map((h) => {
-      const votes = store.pollVotes[h.id] || 0;
+      const votes = store.getPollVoteCount(selectedCourse?.number || selectedCourseNumber, h.id);
       // Real percentage calculation strictly based on genuine votes
       const percentage = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
       const isVoted = userVote?.horseId === h.id || userVote?.horseName === h.name;
@@ -102,7 +102,7 @@ export const Poll: React.FC<PollProps> = ({
     });
 
     return { horseStats: stats, totalCourseVotes: totalVotes };
-  }, [currentCourseHorses, userVote, store.pollVotes]);
+  }, [currentCourseHorses, userVote, store.pollVotes, selectedCourse, selectedCourseNumber]);
 
   // 3. SMOOTH 1-SECOND FILL ANIMATION STATE
   const [animatedPercentages, setAnimatedPercentages] = useState<{ [id: string]: number }>({});
