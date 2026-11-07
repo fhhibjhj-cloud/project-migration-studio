@@ -19,6 +19,7 @@ import { store, PredictionWeek, UserProfile, Horse, PredictionSlip } from '../li
 import { sound } from '../lib/audio';
 import { JockeySilkIcon } from '../components/JockeySilkIcon';
 import { SixPrConfirmationModal } from '../components/SixPrConfirmationModal';
+import { PoolInfoModal } from '../components/PoolInfoModal';
 
 export type HorseSelectionType = 'primary' | 'reserve';
 
@@ -746,8 +747,11 @@ export const ShishPar: React.FC<ShishParProps> = ({
           </div>
 
           {/* Bottom Pill: صندوق کل (fully-rounded pill capsule) */}
-          <div
-            className="w-full rounded-full px-2.5 py-1 bg-[#f0f7ff] dark:bg-[#07101c] border border-[#d8e8f8] dark:border-[#192538] flex items-center justify-between"
+          <button
+            type="button"
+            onClick={() => setShowPoolInfo(true)}
+            aria-label="راهنمای صندوق کل"
+            className="w-full rounded-full px-2.5 py-1 bg-[#f0f7ff] dark:bg-[#07101c] border border-[#d8e8f8] dark:border-[#192538] flex items-center justify-between active:scale-[0.98] transition-transform"
             style={{ borderRadius: '9999px' }}
           >
             <div className="flex items-center gap-1.5">
@@ -755,6 +759,7 @@ export const ShishPar: React.FC<ShishParProps> = ({
               <span className="text-[10px] sm:text-[11px] font-bold text-slate-700 dark:text-slate-300 truncate">
                 صندوق کل
               </span>
+              <span className="w-3.5 h-3.5 rounded-full bg-[#00E676]/15 text-[#00a854] dark:text-[#00E676] text-[9px] font-black flex items-center justify-center">؟</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="font-mono font-bold text-[10px] sm:text-[11px] text-slate-700 dark:text-slate-300 tabular-nums">
@@ -762,11 +767,12 @@ export const ShishPar: React.FC<ShishParProps> = ({
               </span>
               <Coins className="w-3 h-3 text-slate-400 dark:text-slate-500" />
             </div>
-          </div>
+          </button>
 
         </div>
 
       </section>
+      <PoolInfoModal open={showPoolInfo} onClose={() => setShowPoolInfo(false)} pool={activeWeek.totalPoolTomans} />
 
 
 
