@@ -197,6 +197,7 @@ export const ShishPar: React.FC<ShishParProps> = ({
   // Game Mode: 'shishpar' (courses 1-6) or 'panjpar' (courses 2-6)
   const [gameMode, setGameMode] = useState<'shishpar' | 'panjpar'>(activeWeek.type || 'shishpar');
   const [isModeDropdownOpen, setIsModeDropdownOpen] = useState(false);
+  const [showPoolInfo, setShowPoolInfo] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Six-Pr Confirmation Modal State
