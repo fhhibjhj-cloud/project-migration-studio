@@ -1,10 +1,10 @@
 [
- {"capability":"code","source":"TanStack Start SPA (src/sayko) + /api/* server route","outcome":"copy into this project","status":"in_progress","next_action":"copy and build"},
- {"capability":"schema","source":"drizzle migrations (9 tables)","outcome":"migrate to Lovable Cloud","status":"in_progress","next_action":"apply migration"},
+ {"capability":"code","source":"TanStack Start SPA (src/sayko) + /api/* server route","outcome":"copy into this project","status":"verified","next_action":"none"},
+ {"capability":"schema","source":"drizzle migrations (9 tables)","outcome":"migrate to Lovable Cloud","status":"verified","next_action":"none"},
  {"capability":"records","source":"previous Cloud database (central_state JSON row)","outcome":"migrate","status":"pending","next_action":"user exports central_state / tables; bundled seed.json used as starting state"},
  {"capability":"auth identities","source":"custom username/password inside central_state","outcome":"migrate","status":"pending","next_action":"comes with records export; passwords reset on first login"},
  {"capability":"authorization","source":"client-side admin PIN, open RLS","outcome":"migrate","status":"pending","next_action":"server-side roles (follow-up)"},
- {"capability":"realtime","source":"realtime on messages/live_chat/admin_settings/etc","outcome":"migrate","status":"in_progress","next_action":"publication in migration"},
- {"capability":"external providers","source":"Aparat live stream embed","outcome":"preserve","status":"in_progress","next_action":"verify"},
- {"capability":"verification","source":"-","outcome":"-","status":"pending","next_action":"preview check"}
+ {"capability":"realtime","source":"realtime on messages/live_chat/admin_settings/etc","outcome":"migrate","status":"verified","next_action":"none"},
+ {"capability":"external providers","source":"Aparat live stream embed","outcome":"preserve","status":"verified","next_action":"none"},
+ {"capability":"verification","source":"-","outcome":"-","status":"partial","next_action":"home and state API checked; awaiting data export"}
 ]
