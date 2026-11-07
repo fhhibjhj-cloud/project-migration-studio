@@ -3,6 +3,7 @@
  * SAYKO RACING INTELLIGENCE - Central Application Store
  * Manages authentication, racing data, predictions, admin settings, and financial ledger.
  */
+import { netPoolShare, loserRefund, SITE_COMMISSION_RATE } from './poolFormula';
 import { evaluateSlipCourses, isBoundToLive, type LockedCourseResult } from './evaluate';
 
 import {
@@ -1281,7 +1282,7 @@ export class AppStore {
     if (this.currentUser && this.currentUser.id === slip.userId) {
       this.currentUser.balanceTomans = (Number(this.currentUser.balanceTomans) || 0) + refundAmount;
     }
-    this.activeWeek.totalPoolTomans = Math.max(0, (Number(this.activeWeek.totalPoolTomans) || 0) - refundAmount);
+    this.activeWeek.totalPoolTomans = Math.max(0, (Number(this.activeWeek.totalPoolTomans) || 0) - netPoolShare(refundAmount));
 
     // Remember the cancellation permanently so background sync can never bring the slip back
     this.cancelledSlipIds.add(slipId);
@@ -1660,7 +1661,8 @@ export class AppStore {
     this.transactions.unshift(tx);
 
     // Real Dynamic Pool Accumulation: Accumulates real user payments directly into the central prize pool
-    this.activeWeek.totalPoolTomans = (Number(this.activeWeek.totalPoolTomans) || 0) + totalCost;
+    // 14% site commission is taken immediately; only the net 86% enters the total pool
+    this.activeWeek.totalPoolTomans = (Number(this.activeWeek.totalPoolTomans) || 0) + netPoolShare(totalCost);
 
     const resolvedTicketType: 'shishpar' | 'panjpar' = ticketType || (Object.keys(selections).length >= 6 ? 'shishpar' : 'panjpar');
 
@@ -2032,8 +2034,10 @@ export class AppStore {
     let sixPrRefundTomans = 0;
 
     if (sixPrWinnersCount > 0) {
-      sixPrAdminProfit = Math.round(sixPrGrossFund * 0.14);
-      sixPrWinnersPayout = Math.max(0, sixPrGrossFund - sixPrAdminProfit);
+      sixPrAdminProfit = Math.round(sixPrGrossFund * SITE_COMMISSION_RATE);
+      // Losing slips get 20% of their paid amount back; the remaining 66% goes to winners
+      sixPrRefundTomans = sixPrSlips.filter(p => p.status === 'lost').reduce((sum, p) => sum + loserRefund(Number(p.totalCostTomans) || 0), 0);
+      sixPrWinnersPayout = Math.max(0, sixPrGrossFund - sixPrAdminProfit - sixPrRefundTomans);
       sixPrReceiptPrize = Math.round(sixPrWinnersPayout / sixPrWinnersCount);
     } else {
       // 0 winners in Six-Pareh:
@@ -2054,8 +2058,10 @@ export class AppStore {
     let fivePrRefundTomans = 0;
 
     if (fivePrWinnersCount > 0) {
-      fivePrAdminProfit = Math.round(fivePrGrossFund * 0.14);
-      fivePrWinnersPayout = Math.max(0, fivePrGrossFund - fivePrAdminProfit);
+      fivePrAdminProfit = Math.round(fivePrGrossFund * SITE_COMMISSION_RATE);
+      // Losing slips get 20% of their paid amount back; the remaining 66% goes to winners
+      fivePrRefundTomans = fivePrSlips.filter(p => p.status === 'lost').reduce((sum, p) => sum + loserRefund(Number(p.totalCostTomans) || 0), 0);
+      fivePrWinnersPayout = Math.max(0, fivePrGrossFund - fivePrAdminProfit - fivePrRefundTomans);
       fivePrReceiptPrize = Math.round(fivePrWinnersPayout / fivePrWinnersCount);
     } else {
       // 0 winners in Five-Pareh:
