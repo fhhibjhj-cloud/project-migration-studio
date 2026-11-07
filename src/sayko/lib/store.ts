@@ -2526,22 +2526,35 @@ export class AppStore {
   }
 
 
+  /** Poll "round" for a course: changes whenever horse names are added, removed or renamed, which resets votes. */
+  public getPollRoundId(courseNumber: number): string {
+    const course = this.activeWeek?.courses?.find(c => c.number === courseNumber);
+    const sig = (course?.horses || []).map(h => `${h.id}=${h.name}`).sort().join('|');
+    let hash = 0;
+    for (let i = 0; i < sig.length; i++) hash = (hash * 31 + sig.charCodeAt(i)) | 0;
+    return `c${courseNumber}r${(hash >>> 0).toString(36)}`;
+  }
+
+  public getPollVoteKey(courseNumber: number, horseId: string): string {
+    return `${this.getPollRoundId(courseNumber)}:${horseId}`;
+  }
+
+  public getPollVoteCount(courseNumber: number, horseId: string): number {
+    return this.pollVotes[this.getPollVoteKey(courseNumber, horseId)] || 0;
+  }
+
+  private getUserPollLockKey(userId: string, courseNumber: number): string {
+    return `${userId}_${this.getPollRoundId(courseNumber)}`;
+  }
+
   public hasUserVotedInPoll(userId?: string, courseNumber?: number): boolean {
-    const uId = userId || this.currentUser?.id;
-    if (!uId) return false;
-    if (courseNumber !== undefined) {
-      return Boolean(this.userPollVotes[`${uId}_c${courseNumber}`] || (this.userPollVotes[uId]?.courseNumber === courseNumber));
-    }
-    return Boolean(this.userPollVotes[uId]);
+    return Boolean(this.getUserPollVote(userId, courseNumber));
   }
 
   public getUserPollVote(userId?: string, courseNumber?: number): UserPollVote | null {
     const uId = userId || this.currentUser?.id;
-    if (!uId) return null;
-    if (courseNumber !== undefined) {
-      return this.userPollVotes[`${uId}_c${courseNumber}`] || (this.userPollVotes[uId]?.courseNumber === courseNumber ? this.userPollVotes[uId] : null);
-    }
-    return this.userPollVotes[uId] || null;
+    if (!uId || courseNumber === undefined) return null;
+    return this.userPollVotes[this.getUserPollLockKey(uId, courseNumber)] || null;
   }
 
   public castPollVote(
@@ -2565,7 +2578,9 @@ export class AppStore {
     const nowTimestamp = Date.now();
     const timeFa = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit' }).format(new Date());
 
-    this.pollVotes[horseId] = (this.pollVotes[horseId] || 0) + 1;
+    const voteKey = this.getPollVoteKey(courseNumber, horseId);
+    const lockKey = this.getUserPollLockKey(userId, courseNumber);
+    this.pollVotes[voteKey] = (this.pollVotes[voteKey] || 0) + 1;
     const userVote: UserPollVote = {
       userId,
       userName: userName || 'کاربر',
@@ -2575,8 +2590,7 @@ export class AppStore {
       votedAt: timeFa,
       timestamp: nowTimestamp,
     };
-    this.userPollVotes[userId] = userVote;
-    this.userPollVotes[`${userId}_c${courseNumber}`] = userVote;
+    this.userPollVotes[lockKey] = userVote;
     saveToStorage('user_poll_votes', this.userPollVotes);
     saveToStorage('poll_votes_real_v1', this.pollVotes);
 
@@ -2584,7 +2598,7 @@ export class AppStore {
     fetch('/api/poll/vote', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId, userName, horseId, courseNumber, horseName }),
+      body: JSON.stringify({ userId, userName, horseId, courseNumber, horseName, voteKey, lockKey }),
     }).catch(err => console.warn('Sync poll vote error:', err));
 
     this.notify();
