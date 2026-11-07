@@ -1,6 +1,7 @@
 // Ported from the original Express server (server.ts). State is persisted in Lovable Cloud (central_state table).
 /* eslint-disable */
 // @ts-nocheck
+import { netPoolShare, loserRefund } from '../lib/poolFormula';
 import seed from './seed.json';
 
 type Req = { body: any };
@@ -365,7 +366,7 @@ app.post('/api/predictions', (req: Req, res: Res) => {
   user.balanceTomans -= totalCost;
 
   // Real Dynamic Pool Accumulation: Adds exact ticket cost directly into the prize pool!
-  db.activeWeek.totalPoolTomans = (Number(db.activeWeek.totalPoolTomans) || 0) + totalCost;
+  db.activeWeek.totalPoolTomans = (Number(db.activeWeek.totalPoolTomans) || 0) + netPoolShare(totalCost);
 
   // Record slip
   const fullSlip = {
@@ -862,9 +863,31 @@ app.post('/api/admin/set-winner', (req: Req, res: Res) => {
 
   // Automated Pool Distribution: 14% platform profit, 86% winner pool
   if (allResolved) {
-    const gross = Number(db.activeWeek.totalPoolTomans) || 0;
-    const winnerPool = Math.round(gross * 0.86);
+    const netPool = Number(db.activeWeek.totalPoolTomans) || 0;
     const winningSlips = db.predictions.filter((s: any) => s.status === 'won' && !s.isResultFinalized);
+    const losingSlips = db.predictions.filter((s: any) => s.status === 'lost' && !s.isResultFinalized);
+    let refundsTotal = 0;
+    if (winningSlips.length > 0) {
+      // 20% of each losing slip's paid amount goes back to its owner
+      losingSlips.forEach((slip: any) => {
+        const refund = loserRefund(Number(slip.totalCostTomans) || 0);
+        refundsTotal += refund;
+        slip.isResultFinalized = true;
+        const u = db.users.find((x: any) => x.id === slip.userId);
+        if (u) u.balanceTomans = (Number(u.balanceTomans) || 0) + refund;
+        if (!db.notifications) db.notifications = [];
+        db.notifications.unshift({
+          id: `notif_refund_${Date.now()}_${slip.id}`,
+          userId: slip.userId,
+          title: 'عودت ۲۰٪ برگه',
+          message: `۲۰٪ مبلغ برگه شما (${refund.toLocaleString('fa-IR')} تومان) به کیف پول شما بازگشت.`,
+          time: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date()),
+          read: false,
+          type: 'financial',
+        });
+      });
+    }
+    const winnerPool = Math.max(0, netPool - refundsTotal);
     if (winningSlips.length > 0) {
       const payoutPerSlip = Math.max(1000, Math.round(winnerPool / winningSlips.length));
       winningSlips.forEach((slip: any) => {
@@ -936,7 +959,7 @@ app.post('/api/predictions/cancel', (req: Req, res: Res) => {
   if (user) {
     user.balanceTomans = (Number(user.balanceTomans) || 0) + Number(refundAmount);
   }
-  db.activeWeek.totalPoolTomans = Math.max(0, (Number(db.activeWeek.totalPoolTomans) || 0) - Number(refundAmount));
+  db.activeWeek.totalPoolTomans = Math.max(0, (Number(db.activeWeek.totalPoolTomans) || 0) - netPoolShare(Number(refundAmount)));
   saveDatabase(db);
   res.json({ success: true, totalPoolTomans: db.activeWeek.totalPoolTomans, user });
 });
