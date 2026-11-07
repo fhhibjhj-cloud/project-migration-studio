@@ -28,3 +28,6 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- The SAYKO app lives in `src/sayko/` as a client-only SPA mounted by `src/routes/index.tsx` and `src/routes/$.tsx`; it does its own section routing by URL — keep it client-only because it reads browser storage at import time.
+- All `/api/*` endpoints are served by `src/routes/api/$.ts` → `src/sayko/server/api-core.ts`; shared app state is one JSON row in `public.central_state`, read/written only with the service-role client.
