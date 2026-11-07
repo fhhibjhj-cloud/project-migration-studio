@@ -10,9 +10,10 @@ import type { PredictionSlip, Transaction, UserProfile } from './store';
 
 // Works on any host (Lovable, Netlify, ...): set VITE_SUPABASE_URL and
 // VITE_SUPABASE_PUBLISHABLE_KEY (or VITE_SUPABASE_ANON_KEY) in the host's env settings.
-const SB_URL: string = import.meta.env.VITE_SUPABASE_URL || '';
+// Connected directly to the original SAYKO database (public anon key).
+const SB_URL: string = 'https://gingcgjhbmkjhgzwisst.supabase.co';
 // ANON key first: on Netlify it is the user's own key, while the repo's .env carries a different PUBLISHABLE key.
-const SB_KEY: string = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+const SB_KEY: string = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpbmdjZ2poYm1ramhnendpc3N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI2MTgxNjksImV4cCI6MjEwODE5NDE2OX0.YhCdurmo61QPaji9ODGl4JKogyode9v5B0LQ2g9LNUE';
 
 export const isSupabaseConfigured = Boolean(SB_URL && SB_KEY);
 export const supabase: SupabaseClient | null = isSupabaseConfigured
