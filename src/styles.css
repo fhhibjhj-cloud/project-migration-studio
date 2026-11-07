@@ -1,144 +1,276 @@
 @import "tailwindcss" source(none);
 @source "../src";
-@import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
-
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
-
-@theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-destructive-foreground: var(--destructive-foreground);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-}
-
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
-}
-
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
-}
+@variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
 
 @layer base {
-  * {
-    border-color: var(--color-border);
+  :root,
+  [data-theme="light"],
+  html.light,
+  body.light {
+    --font-sans: 'Vazirmatn', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    
+    /* Light Mode Tokens */
+    --bg-page: #f8fafc;
+    --surface-card: #ffffff;
+    --surface-card-subtle: #f1f5f9;
+    --border-card: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+    --accent-green: #10b981;
+    --accent-green-dark: #059669;
+
+    /* Scratched horse Light Mode */
+    --scratched-bg: #F5E5E8;
+    --scratched-border: #F7B1B1;
+    --scratched-text: #C94141;
+
+    color-scheme: light;
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
+  .dark,
+  [data-theme="dark"],
+  html.dark,
+  body.dark {
+    /* Dark Mode Tokens */
+    --bg-page: #0b0f17;
+    --surface-card: #151d2a;
+    --surface-card-subtle: #1e293b;
+    --border-card: #273549;
+    --text-primary: #f8fafc;
+    --text-muted: #94a3b8;
+    --accent-green: #10b981;
+    --accent-green-dark: #059669;
+
+    /* Scratched horse Dark Mode */
+    --scratched-bg: #280610;
+    --scratched-border: #5C0A1C;
+    --scratched-text: #AB273F;
+
+    color-scheme: dark;
+  }
+
+  /* Global Font Application */
+  *,
+  *::before,
+  *::after,
+  html,
+  body,
+  button,
+  input,
+  select,
+  textarea,
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  span,
+  a,
+  label {
+    font-family: 'Vazirmatn', sans-serif !important;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: none;
+    scroll-behavior: smooth;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Text selection discipline */
+  button, a, input, select, textarea, .no-select {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .selectable-text {
+    user-select: text;
+    -webkit-user-select: text;
   }
 }
+
+/* Explicit Light Mode Definitions */
+html[data-theme="light"],
+html:not(.dark),
+body[data-theme="light"],
+body:not(.dark) {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .bg-white,
+html:not(.dark) .bg-white {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .text-slate-900,
+html:not(.dark) .text-slate-900 {
+  color: #0f172a !important;
+}
+
+html[data-theme="light"] .text-slate-500,
+html:not(.dark) .text-slate-500 {
+  color: #64748b !important;
+}
+
+html[data-theme="light"] .text-slate-400,
+html:not(.dark) .text-slate-400 {
+  color: #94a3b8 !important;
+}
+
+html[data-theme="light"] .bg-slate-50,
+html:not(.dark) .bg-slate-50 {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .bg-slate-100,
+html:not(.dark) .bg-slate-100 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .app-header,
+html:not(.dark) .app-header {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Crisp Header Logo Rendering - No inversion filters or background boxes */
+.app-header img {
+  filter: none !important;
+  mix-blend-mode: normal !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+html[data-theme="light"] nav[aria-label="ناوبری اصلی"],
+html:not(.dark) nav[aria-label="ناوبری اصلی"] {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Smooth theme transitions */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 60 FPS Performance Optimizations */
+.gpu-layer {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.app-header {
+  padding-top: max(env(safe-area-inset-top, 10px), 12px);
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom, 16px), 16px);
+}
+
+.shishpar-grid {
+  transform: translateZ(0);
+}
+
+.capsule-isolate {
+  contain: content;
+}
+
+/* Scratched Horse Exact Specifications */
+.scratched-horse-capsule {
+  background-color: var(--scratched-bg) !important;
+  border: 1px solid var(--scratched-border) !important;
+  color: var(--scratched-text) !important;
+}
+
+.scratched-horse-text {
+  color: var(--scratched-text) !important;
+  text-decoration: line-through !important;
+}
+
+/* Ultra-smooth 60FPS Horse Cell Hardware Acceleration */
+.horse-capsule-cell {
+  will-change: background-color, border-color, transform;
+  transition: background-color 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.1s ease-in-out;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.horse-capsule-cell:active {
+  transform: scale(0.96) translateZ(0);
+}
+
+/* Replacement Horse Exact Specifications: Solid White in both Light and Dark themes */
+.replacement-horse-name {
+  color: #FFFFFF !important;
+  font-weight: 700;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
+/* ===== Mobile UX: inertia scrolling, no tap delay, press feedback, pull-to-refresh ===== */
+html {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+html, body, button, a, input, select, textarea, label, [role="button"], [role="switch"] {
+  touch-action: manipulation;
+}
+* { -webkit-overflow-scrolling: touch; -webkit-tap-highlight-color: transparent; }
+button:not(:disabled), [role="button"], .capsule, .scratched-horse-capsule {
+  transition: transform 120ms ease-out;
+}
+button:not(:disabled):active, [role="button"]:active, .capsule:active, .scratched-horse-capsule:active {
+  transform: scale(0.97);
+}
+.ptr-indicator {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  z-index: 100;
+  width: 40px;
+  height: 40px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(255 255 255 / 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgb(16 185 129 / 0.25);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.15);
+  pointer-events: none;
+}
+.dark .ptr-indicator { background: rgb(21 29 42 / 0.75); }
