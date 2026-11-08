@@ -9,6 +9,9 @@ import { evaluateSlipCourses, isBoundToLive, type LockedCourseResult } from './e
 
 import {
   syncUserBalanceToDb,
+  patchUserDataInDb,
+  deleteUserFromDb,
+  isRemovedRow,
   insertPredictionToDb,
   deletePredictionFromDb,
   insertTransactionToDb,
