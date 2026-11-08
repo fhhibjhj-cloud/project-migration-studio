@@ -874,9 +874,9 @@ app.post('/api/admin/set-winner', (req: Req, res: Res) => {
       // 20% of each losing slip's paid amount goes back to its owner
       losingSlips.forEach((slip: any) => {
         const refund = loserRefund(Number(slip.totalCostTomans) || 0);
-        if (refund <= 0) continue;
-        refundsTotal += refund;
         slip.isResultFinalized = true;
+        if (refund <= 0) return; // slips of 99,000 or less get no refund
+        refundsTotal += refund;
         const u = db.users.find((x: any) => x.id === slip.userId);
         if (u) u.balanceTomans = (Number(u.balanceTomans) || 0) + refund;
         if (!db.notifications) db.notifications = [];
