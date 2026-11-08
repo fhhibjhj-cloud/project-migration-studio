@@ -30,12 +30,7 @@ export const Live: React.FC<LiveProps> = ({ onBackToHome, onNavigateToShishPar }
   const [streamUrl, setStreamUrl] = useState(store.liveStreamUrl);
   const [chatMessage, setChatMessage] = useState('');
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
-  const [chatList, setChatList] = useState<ChatMessage[]>([
-    { id: 1, user: 'ترکمن_صحرا', text: 'کورس چهارم تروبرد واقعاً دیدنیه!', time: 'لحظاتی پیش' },
-    { id: 2, user: 'گنبد_رِیسر', text: 'اسب شماره ۱ کورس ۶ فانتوم جت بخت اوله', time: '۱ دقیقه پیش' },
-    { id: 3, user: 'آراز_توماج', text: 'پخش زنده آپارات بسیار باکیفیت و بدون قطعی است', time: '۲ دقیقه پیش' },
-    { id: 4, user: 'سوارکار_بندر', text: 'دوستانی که فرم نزدن فقط ۱۵ دقیقه تا شروع مونده', time: '۳ دقیقه پیش' },
-  ]);
+  const [chatList, setChatList] = useState<ChatMessage[]>([]);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -59,14 +54,14 @@ export const Live: React.FC<LiveProps> = ({ onBackToHome, onNavigateToShishPar }
     try {
       if (isSupabaseConfigured) {
         const dbMsgs = await fetchLiveChatFromDb();
-        if (dbMsgs && dbMsgs.length > 0) setChatList(dbMsgs);
+        if (Array.isArray(dbMsgs)) setChatList(dbMsgs);
         return;
       }
 
       const res = await fetch('/api/chat/live');
       if (res.ok) {
         const data = await res.json();
-        if (data.success && Array.isArray(data.messages) && data.messages.length > 0) {
+        if (data.success && Array.isArray(data.messages)) {
           setChatList(data.messages);
         }
       }
