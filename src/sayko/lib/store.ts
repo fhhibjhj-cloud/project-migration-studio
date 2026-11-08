@@ -3,6 +3,7 @@
  * SAYKO RACING INTELLIGENCE - Central Application Store
  * Manages authentication, racing data, predictions, admin settings, and financial ledger.
  */
+import { isOnlineNow, isBanActive, banEndFor } from './userStatus';
 import { netPoolShare, loserRefund, SITE_COMMISSION_RATE } from './poolFormula';
 import { evaluateSlipCourses, isBoundToLive, type LockedCourseResult } from './evaluate';
 
@@ -764,6 +765,7 @@ export class AppStore {
   public deletedIds: Set<string> = new Set();
   public bannedNotice: number | null = null;
   private lastPresencePing = 0;
+  private seenRemoteIds = new Set<string>();
   public adminFeePercentage: number = 14;
   public isSettlementCompleted: boolean;
   public customWinningPrize: number = 23000000;
@@ -1087,6 +1089,7 @@ export class AppStore {
         const local = this.users.find(u => u.id === r.id);
         const balanceLocked = now - (recentBalanceWrites[r.id] || 0) < 6000;
         if (!local) {
+          if (this.deletedIds.has(r.id)) return;
           this.users.push({ ...remote, password: undefined });
           changed = true;
         } else {
@@ -1111,7 +1114,8 @@ export class AppStore {
       this.users.forEach(u => { const on = u.role === 'admin' && u.id === this.currentUser?.id ? true : isOnlineNow(u.lastSeenAt, now); if (u.isOnline !== on) { u.isOnline = on; changed = true; } });
       if (this.currentUser) {
         const me = rawUsers.find((r: any) => r.id === this.currentUser!.id);
-        if (!me && rawUsers.length > 0 && !this.currentUser.isGuest && this.currentUser.role !== 'admin' && this.currentUser.id.startsWith('usr_') && this.deletedIds.has(this.currentUser.id)) { this.logout(); return; }
+        if (me) this.seenRemoteIds.add(me.id);
+        else if (rawUsers.length > 0 && this.currentUser.role !== 'admin' && this.seenRemoteIds.has(this.currentUser.id)) { this.logout(); return; }
         const meLocal = this.users.find(u => u.id === this.currentUser!.id);
         if (meLocal && meLocal.role !== 'admin' && isBanActive(meLocal, now)) { this.bannedNotice = meLocal.bannedUntil || null; this.logout(); return; }
         if (now - this.lastPresencePing > 20000 && !this.currentUser.isGuest) {
