@@ -818,7 +818,7 @@ export class AppStore {
           snapshotCourses: p.snapshotCourses || JSON.parse(JSON.stringify(INITIAL_COURSES)),
         }))
       : INITIAL_PREDICTIONS.map(p => ({ ...p }));
-    this.predictions = validPredictions;
+    this.predictions = validPredictions.filter(p => !FAKE_USER_IDS.has(p.userId));
     saveToStorage('predictions', this.predictions);
 
     this.transactions = loadFromStorage('transactions', INITIAL_TRANSACTIONS).filter((x: any) => !FAKE_USER_IDS.has(x.userId));
