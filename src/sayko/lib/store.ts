@@ -178,6 +178,8 @@ export interface UserProfile {
   isGuest?: boolean;
   isBanned?: boolean;
   isOnline?: boolean;
+  lastSeenAt?: number;
+  bannedUntil?: number;
   isFullNameLocked?: boolean;
   registeredAt?: string;
   lastLogin?: string;
@@ -759,6 +761,9 @@ export class AppStore {
   public adminSensitiveAlerts: boolean;
   public isWithdrawalEnabled: boolean;
   public refundRate: number;
+  public deletedIds: Set<string> = new Set();
+  public bannedNotice: number | null = null;
+  private lastPresencePing = 0;
   public adminFeePercentage: number = 14;
   public isSettlementCompleted: boolean;
   public customWinningPrize: number = 23000000;
@@ -774,7 +779,8 @@ export class AppStore {
   private constructor() {
     this.todayStatsResetTimestamp = loadFromStorage('today_stats_reset_timestamp', 0);
     this.todayProfitResetTimestamp = loadFromStorage('admin_today_profit_reset', 0);
-    this.users = loadFromStorage('users', DEFAULT_USERS).filter(u => !FAKE_USER_IDS.has(u.id));
+    this.deletedIds = new Set(loadFromStorage<string[]>('deleted_user_ids', []));
+    this.users = loadFromStorage('users', DEFAULT_USERS).filter(u => !FAKE_USER_IDS.has(u.id) && !this.deletedIds.has(u.id));
     // Real Wallet & Zero Initial Balance: Ensure all non-admin users without approved transactions have strictly 0 Tomans
     this.users = this.users.map((u, idx) => {
       let balance = u.balanceTomans;
@@ -1087,6 +1093,9 @@ export class AppStore {
           const before = JSON.stringify([local.balanceTomans, local.isBanned, local.iban, local.cardNumber, local.fullName, local.passwordHash]);
           if (!balanceLocked) local.balanceTomans = remote.balanceTomans;
           local.isBanned = remote.isBanned;
+          if (local.bannedUntil !== remote.bannedUntil || local.lastSeenAt !== remote.lastSeenAt) changed = true;
+          local.bannedUntil = remote.bannedUntil;
+          local.lastSeenAt = remote.lastSeenAt;
           local.iban = remote.iban || local.iban;
           local.cardNumber = remote.cardNumber || local.cardNumber;
           local.fullName = remote.fullName || local.fullName;
@@ -1098,9 +1107,21 @@ export class AppStore {
           changed = true;
         }
       });
+      // Real presence + enforce bans for the signed-in user
+      this.users.forEach(u => { const on = u.role === 'admin' && u.id === this.currentUser?.id ? true : isOnlineNow(u.lastSeenAt, now); if (u.isOnline !== on) { u.isOnline = on; changed = true; } });
+      if (this.currentUser) {
+        const me = rawUsers.find((r: any) => r.id === this.currentUser!.id);
+        if (!me && rawUsers.length > 0 && !this.currentUser.isGuest && this.currentUser.role !== 'admin' && this.currentUser.id.startsWith('usr_') && this.deletedIds.has(this.currentUser.id)) { this.logout(); return; }
+        const meLocal = this.users.find(u => u.id === this.currentUser!.id);
+        if (meLocal && meLocal.role !== 'admin' && isBanActive(meLocal, now)) { this.bannedNotice = meLocal.bannedUntil || null; this.logout(); return; }
+        if (now - this.lastPresencePing > 20000 && !this.currentUser.isGuest) {
+          this.lastPresencePing = now;
+          patchUserDataInDb(this.currentUser.id, { lastSeenAt: now }).catch(() => {});
+        }
+      }
       // Upload users that exist only on this device (e.g. registered before central sync)
       this.users.forEach(u => {
-        if (!u.isGuest && !u.id.startsWith('guest_') && !rawUsers.some((r: any) => r.id === u.id)) {
+        if (!u.isGuest && !u.id.startsWith('guest_') && !FAKE_USER_IDS.has(u.id) && !this.deletedIds.has(u.id) && !rawUsers.some((r: any) => r.id === u.id)) {
           upsertUserToDb(u).catch(() => {});
         }
       });
@@ -1369,8 +1390,13 @@ export class AppStore {
         const { data } = await supabase.from('users').select('*').ilike('username', cleanUser).limit(1);
         const r: any = data && data[0];
         if (r) {
+          if (isRemovedRow(r)) return { success: false, message: 'این حساب کاربری وجود ندارد.' };
           if (r.password_hash && r.password_hash !== sha256(password)) {
             return { success: false, message: 'رمز عبور وارد شده نادرست است.' };
+          }
+          const bu = r.data && r.data.bannedUntil;
+          if (r.role !== 'admin' && isBanActive({ isBanned: r.is_banned, bannedUntil: bu })) {
+            return { success: false, message: bu ? `حساب شما تا ${new Date(bu).toLocaleDateString('fa-IR')} مسدود است.` : 'حساب شما مسدود شده است.' };
           }
           const remote: any = {
             ...(r.data || {}),
@@ -2423,7 +2449,47 @@ export class AppStore {
     const u = this.users.find(usr => usr.id === userId);
     if (!u) return;
     u.isBanned = !u.isBanned;
+    u.bannedUntil = undefined;
+    patchUserDataInDb(userId, { bannedUntil: null }, { is_banned: u.isBanned }).catch(() => {});
     this.notify();
+  }
+
+  /** Temporarily ban a user for N days: no login, slips or messages until it ends. */
+  public banUserForDays(userId: string, days: number): number | null {
+    const u = this.users.find(usr => usr.id === userId);
+    if (!u) return null;
+    const until = banEndFor(days);
+    u.isBanned = true;
+    u.bannedUntil = until;
+    saveToStorage('users', this.users);
+    patchUserDataInDb(userId, { bannedUntil: until, isBanned: true }, { is_banned: true }).catch(() => {});
+    this.notify();
+    return until;
+  }
+
+  public unbanUser(userId: string): void {
+    const u = this.users.find(usr => usr.id === userId);
+    if (!u) return;
+    u.isBanned = false;
+    u.bannedUntil = undefined;
+    saveToStorage('users', this.users);
+    patchUserDataInDb(userId, { bannedUntil: null, isBanned: false }, { is_banned: false }).catch(() => {});
+    this.notify();
+  }
+
+  /** Permanently delete a user and all their records. */
+  public async deleteUserPermanently(userId: string): Promise<boolean> {
+    this.deletedIds.add(userId);
+    saveToStorage('deleted_user_ids', [...this.deletedIds]);
+    this.users = this.users.filter(u => u.id !== userId);
+    this.predictions = this.predictions.filter(p => p.userId !== userId);
+    this.transactions = this.transactions.filter(t => t.userId !== userId);
+    this.supportTickets = this.supportTickets.filter((t: any) => t.userId !== userId);
+    saveToStorage('users', this.users);
+    saveToStorage('predictions', this.predictions);
+    saveToStorage('transactions', this.transactions);
+    this.notify();
+    return deleteUserFromDb(userId);
   }
 
   public updateLiveStreamSettings(settings: {

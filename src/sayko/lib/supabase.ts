@@ -93,10 +93,37 @@ export async function upsertUserToDb(u: UserProfile): Promise<boolean> {
   return !error;
 }
 
+const FAKE_IDS = ['user_sample', 'user_sara', 'user_reza', 'user_kamran'];
+export const isRemovedRow = (r: any) => !r || FAKE_IDS.includes(r.id) || Boolean(r.data && r.data.deleted);
+
 export async function fetchAllUsersRaw(): Promise<any[]> {
   if (!supabase) return [];
   const { data } = await supabase.from('users').select('*');
-  return data || [];
+  return (data || []).filter((r: any) => !isRemovedRow(r));
+}
+
+/** Merge fields into the user's JSON data column. */
+export async function patchUserDataInDb(userId: string, patch: Record<string, any>, cols: Record<string, any> = {}): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { data } = await supabase.from('users').select('data').eq('id', userId).limit(1);
+    const cur = (data && data[0] && data[0].data) || {};
+    const { error } = await supabase.from('users').update({ ...cols, data: { ...cur, ...patch }, updated_at: new Date().toISOString() }).eq('id', userId);
+    return !error;
+  } catch { return false; }
+}
+
+/** Permanently remove a user. Rows are deleted where allowed; the account is also tombstoned so it can never return. */
+export async function deleteUserFromDb(userId: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    for (const t of ['predictions', 'transactions', 'notifications', 'support_tickets', 'messages']) {
+      await supabase.from(t).delete().eq('user_id', userId);
+    }
+    await supabase.from('users').delete().eq('id', userId);
+    await supabase.from('users').update({ is_banned: true, data: { deleted: true, deletedAt: Date.now() }, password_hash: null }).eq('id', userId);
+    return true;
+  } catch { return false; }
 }
 
 export async function upsertNotificationToDb(n: any): Promise<void> {
@@ -615,7 +642,7 @@ export async function fetchLiveChatFromDb(): Promise<LiveChatMessageItem[]> {
       .limit(200);
 
     if (error || !data) return [];
-    return data.map((d: any) => ({
+    return data.filter((d: any) => !isRemovedRow(d)).map((d: any) => ({
       id: d.id,
       user: d.user_name || d.user || 'کاربر',
       text: d.text,
@@ -714,7 +741,7 @@ export async function fetchUsersFromDb(): Promise<UserProfile[]> {
   try {
     const { data, error } = await supabase.from('users').select('*').order('created_at', { ascending: false });
     if (error || !data) return [];
-    return data.map((d: any) => ({
+    return data.filter((d: any) => !isRemovedRow(d)).map((d: any) => ({
       id: d.id,
       numericId: Number(d.id.replace(/\D/g, '').slice(-5)) || 10842,
       fullName: d.full_name,
