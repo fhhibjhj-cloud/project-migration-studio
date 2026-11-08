@@ -314,6 +314,9 @@ const DEFAULT_USERS: UserProfile[] = [
   },
 ];
 
+// Demo/fake accounts that must never appear in the app
+export const FAKE_USER_IDS = new Set(['user_sample', 'user_sara', 'user_reza', 'user_kamran']);
+
 const INITIAL_COURSES: Course[] = [
   {
     id: 'c1',
@@ -771,7 +774,7 @@ export class AppStore {
   private constructor() {
     this.todayStatsResetTimestamp = loadFromStorage('today_stats_reset_timestamp', 0);
     this.todayProfitResetTimestamp = loadFromStorage('admin_today_profit_reset', 0);
-    this.users = loadFromStorage('users', DEFAULT_USERS);
+    this.users = loadFromStorage('users', DEFAULT_USERS).filter(u => !FAKE_USER_IDS.has(u.id));
     // Real Wallet & Zero Initial Balance: Ensure all non-admin users without approved transactions have strictly 0 Tomans
     this.users = this.users.map((u, idx) => {
       let balance = u.balanceTomans;
@@ -818,9 +821,9 @@ export class AppStore {
     this.predictions = validPredictions;
     saveToStorage('predictions', this.predictions);
 
-    this.transactions = loadFromStorage('transactions', INITIAL_TRANSACTIONS);
-    this.notifications = loadFromStorage('notifications', INITIAL_NOTIFICATIONS);
-    this.supportTickets = loadFromStorage('support_tickets', INITIAL_SUPPORT_TICKETS);
+    this.transactions = loadFromStorage('transactions', INITIAL_TRANSACTIONS).filter((x: any) => !FAKE_USER_IDS.has(x.userId));
+    this.notifications = loadFromStorage('notifications', INITIAL_NOTIFICATIONS).filter((x: any) => !FAKE_USER_IDS.has(x.userId));
+    this.supportTickets = loadFromStorage('support_tickets', INITIAL_SUPPORT_TICKETS).filter((x: any) => !FAKE_USER_IDS.has(x.userId));
     this.pollVotes = loadFromStorage('poll_votes_real_v1', INITIAL_POLL_VOTES);
     this.userPollVotes = loadFromStorage('user_poll_votes', {
       user_admin: {
