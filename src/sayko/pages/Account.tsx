@@ -410,7 +410,7 @@ export const Account: React.FC<AccountProps> = ({
       </div>
 
       {/* Tabs */}
-      <div className="grid grid-cols-3 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl text-xs font-bold">
+      <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-2xl text-xs font-bold">
         <button
           onClick={() => setActiveTab('profile')}
           className={`py-2 rounded-xl transition-all cursor-pointer ${
@@ -420,16 +420,6 @@ export const Account: React.FC<AccountProps> = ({
           }`}
         >
           ویرایش مشخصات
-        </button>
-        <button
-          onClick={() => setActiveTab('slips')}
-          className={`py-2 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'slips'
-              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-              : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-          }`}
-        >
-          فرم‌های من ({userSlips.length})
         </button>
         <button
           onClick={() => setActiveTab('ledger')}
@@ -897,84 +887,6 @@ export const Account: React.FC<AccountProps> = ({
       )}
 
       {/* TAB 2: User Prediction Slips */}
-      {activeTab === 'slips' && (
-        <div className="space-y-3">
-          {onNavigateToMessages && (
-            <button
-              onClick={() => { sound.playClick(); onNavigateToMessages(); }}
-              className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold flex items-center justify-between shadow-md transition-all cursor-pointer"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center">
-                  <Mail className="w-4 h-4 text-white" />
-                </div>
-                <span>مشاهده در صندوق پیام (طراحی اختصاصی رسید پیش‌بینی)</span>
-              </div>
-              <ChevronRight className="w-4 h-4 rotate-180" />
-            </button>
-          )}
-          {userSlips.length === 0 ? (
-            <div className="bg-white dark:bg-[#151d2a] rounded-[24px] p-8 text-center border border-slate-100 dark:border-slate-800">
-              <Trophy className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-              <p className="text-xs text-slate-400 font-medium">شما هنوز هیچ فرم پیش‌بینی در شش پره ثبت نکرده‌اید.</p>
-            </div>
-          ) : (
-            userSlips.map((slip) => (
-              <div 
-                key={slip.id}
-                className="bg-white dark:bg-[#151d2a] rounded-[20px] p-4 border border-slate-100 dark:border-slate-800/80 shadow-xs space-y-2"
-              >
-                <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-slate-700 dark:text-slate-200">کد: {slip.id}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                      در انتظار نتیجه کورس‌ها
-                    </span>
-                  </div>
-                  <span className="font-mono text-[10px] text-slate-400">{slip.submittedAt}</span>
-                </div>
-
-                {(() => {
-                  const slipCourseNums = Object.keys(slip.selections)
-                    .map(Number)
-                    .filter((n) => (slip.selections[n] || []).length > 0)
-                    .sort((a, b) => a - b);
-                  const displayNums = slipCourseNums.length > 0
-                    ? slipCourseNums
-                    : (slip.selections[1] !== undefined ? [1, 2, 3, 4, 5, 6] : [2, 3, 4, 5, 6]);
-                  const colsClass = displayNums.length === 7 
-                    ? 'grid-cols-7' 
-                    : displayNums.length === 5 
-                    ? 'grid-cols-5' 
-                    : 'grid-cols-6';
-                  return (
-                    <div className={`grid ${colsClass} gap-1.5 py-1 text-center font-mono text-xs`}>
-                      {displayNums.map((num) => {
-                        const horses = slip.selections[num] || [];
-                        return (
-                          <div key={num} className="bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
-                            <span className="text-[9px] text-slate-400 block">کورس {num}</span>
-                            <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
-                              {horses.join(', ') || '-'}
-                            </strong>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })()}
-
-                <div className="flex items-center justify-between text-xs pt-1 text-slate-500">
-                  <span>ترکیب‌ها: <strong className="text-slate-900 dark:text-white font-mono">{slip.combinationsCount}</strong></span>
-                  <span>مبلغ: <strong className="text-[#10B981] font-mono">{slip.totalCostTomans.toLocaleString('fa-IR')} ت</strong></span>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* TAB 3: Transactions Ledger */}
       {activeTab === 'ledger' && (
         <div className="space-y-2.5">
           {userTxs.length === 0 ? (
