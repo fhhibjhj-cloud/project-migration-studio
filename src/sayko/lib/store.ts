@@ -1880,6 +1880,7 @@ export class AppStore {
 
     activeSlips.forEach(slip => {
       if (slip.isRefunded) return;
+      if ((Number(slip.totalCostTomans) || 0) <= 99000) return; // refund only above 99,000 Toman
 
       const refundAmount = Math.round((Number(slip.totalCostTomans) || 0) * (rate / 100));
       if (refundAmount <= 0) return;
