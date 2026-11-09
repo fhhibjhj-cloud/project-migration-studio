@@ -39,6 +39,7 @@ import {
   sha256,
   supabase,
   isSupabaseConfigured,
+  pruneExpiredData,
 } from './supabase';
 
 export interface Horse {
@@ -785,6 +786,10 @@ export class AppStore {
     this.todayStatsResetTimestamp = loadFromStorage('today_stats_reset_timestamp', 0);
     this.todayProfitResetTimestamp = loadFromStorage('admin_today_profit_reset', 0);
     this.deletedIds = new Set(loadFromStorage<string[]>('deleted_user_ids', []));
+    if (typeof window !== 'undefined') {
+      setTimeout(() => pruneExpiredData().catch(() => {}), 5000);
+      setInterval(() => pruneExpiredData().catch(() => {}), 15 * 60e3);
+    }
     this.users = loadFromStorage('users', DEFAULT_USERS).filter(u => !FAKE_USER_IDS.has(u.id) && !this.deletedIds.has(u.id));
     // Real Wallet & Zero Initial Balance: Ensure all non-admin users without approved transactions have strictly 0 Tomans
     this.users = this.users.map((u, idx) => {
