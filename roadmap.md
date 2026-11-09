@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] P1 Admin users: real users only, online status, tx history, prediction history, temp ban (days), hard delete
-- [ ] P2 20% refund only if paid > 99,000; live pool
-- [ ] P3 Remove "My forms" tab from Account
-- [ ] P4 Remove fake live chat; support layout user right/admin left, scroll bottom, NEW badge
+- [x] P1 Admin users panel
+- [x] P2 Inbox red scratched / blue swap / 20% refund note
+- [x] P3 Support layout, NEW badge, no fake chat
+- [x] Data retention cleanup
