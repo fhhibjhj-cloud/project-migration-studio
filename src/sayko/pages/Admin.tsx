@@ -59,6 +59,7 @@ import { formatSmartAmountFa } from '../lib/format';
 import { sendAdminDirectMessageInDb } from '../lib/supabase';
 import { ChangeAdminPinModal } from '../components/ChangeAdminPinModal';
 import { StreamPlayer } from '../components/StreamPlayer';
+import { UserDetailPanel } from '../components/UserDetailPanel';
 
 interface AdminProps {
   currentUser: UserProfile | null;
@@ -2949,83 +2950,7 @@ export const Admin: React.FC<AdminProps> = ({
               </div>
             </div>
 
-            {/* 2. Online Activity */}
-            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl space-y-2 text-xs">
-              <h4 className="font-extrabold text-emerald-500 pb-1 border-b border-slate-200/60 dark:border-slate-800">
-                ۲. وضعیت فعالیت آنلاین:
-              </h4>
-              <div className="flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-1.5">
-                  <span className={`w-2.5 h-2.5 rounded-full ${selectedUserForInspection.isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                  <span>وضعیت فعلی: {selectedUserForInspection.isOnline ? 'آنلاین' : 'آفلاین'}</span>
-                </div>
-                <span>آخرین ورود: {selectedUserForInspection.lastLogin || '۱۰ دقیقه پیش'}</span>
-              </div>
-            </div>
-
-            {/* 3. Financial History */}
-            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl space-y-2 text-xs">
-              <h4 className="font-extrabold text-amber-500 pb-1 border-b border-slate-200/60 dark:border-slate-800">
-                ۳. تاریخچه و تراکنش‌های مالی:
-              </h4>
-              <div className="grid grid-cols-3 gap-2 text-center text-[11px]">
-                <div className="p-2 bg-white dark:bg-slate-900 rounded-xl">
-                  <span className="text-slate-400 block text-[10px]">موجودی</span>
-                  <span className="font-bold font-mono text-emerald-500">{selectedUserForInspection.balanceTomans.toLocaleString('fa-IR')}</span>
-                </div>
-                <div className="p-2 bg-white dark:bg-slate-900 rounded-xl">
-                  <span className="text-slate-400 block text-[10px]">واریزها</span>
-                  <span className="font-bold font-mono">{selectedUserForInspection.depositCount || 12} بار</span>
-                </div>
-                <div className="p-2 bg-white dark:bg-slate-900 rounded-xl">
-                  <span className="text-slate-400 block text-[10px]">برداشت‌ها</span>
-                  <span className="font-bold font-mono">{selectedUserForInspection.withdrawalCount || 4} بار</span>
-                </div>
-              </div>
-            </div>
-
-            {/* 4. Betting History */}
-            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-2xl space-y-2 text-xs">
-              <h4 className="font-extrabold text-purple-500 pb-1 border-b border-slate-200/60 dark:border-slate-800">
-                ۴. آمار و سوابق پیش‌بینی:
-              </h4>
-              <div className="flex items-center justify-around text-center text-[11px]">
-                <div><span className="text-slate-400 block">تعداد بردها</span><b className="text-emerald-500 font-mono text-sm">{selectedUserForInspection.winsCount || 3}</b></div>
-                <div><span className="text-slate-400 block">تعداد باخت‌ها</span><b className="text-red-500 font-mono text-sm">{selectedUserForInspection.lossCount || 5}</b></div>
-                <div><span className="text-slate-400 block">کل فرم‌های ثبت‌شده</span><b className="font-mono text-sm">{selectedUserForInspection.totalGames || 124}</b></div>
-              </div>
-            </div>
-
-            {/* Action Buttons: Ban/Unban & Adjust Balance */}
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => {
-                  sound.playAlert();
-                  store.toggleBanUser(selectedUserForInspection.id);
-                  setSelectedUserForInspection({
-                    ...selectedUserForInspection,
-                    isBanned: !selectedUserForInspection.isBanned
-                  });
-                  showToast(selectedUserForInspection.isBanned ? 'کاربر از حالت مسدود خارج شد.' : 'کاربر مسدود گردید.');
-                }}
-                className={`flex-1 h-10 rounded-xl font-black text-xs transition-all cursor-pointer ${
-                  selectedUserForInspection.isBanned
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                    : 'bg-red-600 hover:bg-red-700 text-white'
-                }`}
-              >
-                {selectedUserForInspection.isBanned ? 'رفع مسدودی کاربر' : 'مسدود کردن کاربر'}
-              </button>
-
-              <button
-                onClick={() => {
-                  setAdjustBalanceUserId(selectedUserForInspection.id);
-                }}
-                className="flex-1 h-10 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs cursor-pointer"
-              >
-                تغییر موجودی کاربر
-              </button>
-            </div>
+            <UserDetailPanel user={selectedUserForInspection} onClose={() => setSelectedUserForInspection(null)} onAdjust={() => setAdjustBalanceUserId(selectedUserForInspection.id)} toast={showToast} />
           </motion.div>
         </div>
       )}
