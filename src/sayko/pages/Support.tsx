@@ -299,7 +299,7 @@ export const Support: React.FC<SupportProps> = ({ onBackToHome, onOpenAuth }) =>
               return (
                 <div
                   key={m.id}
-                  className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                  className={`flex flex-col ${isMe ? 'items-start' : 'items-end'}`}
                 >
                   <div
                     className={`max-w-[85%] rounded-2xl p-3 text-xs leading-relaxed ${
