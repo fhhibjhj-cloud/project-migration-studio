@@ -57,7 +57,7 @@ export function UserDetailPanel({ user, onClose, onAdjust, toast }: { user: User
                 <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 space-y-1">
                   <div>شناسه: <span className="font-mono">{s.id}</span> • ترکیب‌ها: {fa(s.combinationsCount)}</div>
                   {Object.entries(s.selections || {}).map(([c, h]) => (
-                    <div key={c}>کورس {c}: [{(h as number[]).join('.')}]{s.replacementSelections?.[Number(c)]?.length ? ` رزرو: ${s.replacementSelections![Number(c)].join('.')}` : ''}</div>))}
+                    <div key={c}>کورس {c}: [{(h as number[]).join('.')}]{(s.replacementSelections?.[Number(c)] ?? []).length ? ` رزرو: ${(s.replacementSelections?.[Number(c)] ?? []).join('.')}` : ''}</div>))}
                   {!!s.payoutTomans && <div className="text-emerald-500">جایزه: {fa(s.payoutTomans)} ت</div>}
                   {!!s.refundedAmountTomans && <div className="text-emerald-500">عودت: {fa(s.refundedAmountTomans)} ت</div>}
                 </div>)}
