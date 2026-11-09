@@ -189,7 +189,7 @@ export const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onClose }) =
             return (
               <div
                 key={m.id}
-                className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
+                className={`flex flex-col ${isMe ? 'items-start' : 'items-end'}`}
               >
                 <div
                   className={`max-w-[85%] p-3 rounded-2xl text-xs leading-relaxed ${

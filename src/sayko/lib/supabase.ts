@@ -806,3 +806,21 @@ export function subscribeToLiveChat(
     return () => {};
   }
 }
+
+/** Data retention: live chat 24h, support 7 days, receipts & transactions 30 days. */
+export const RETENTION_MS = { liveChat: 24 * 3600e3, support: 7 * 24 * 3600e3, inbox: 30 * 24 * 3600e3 };
+let lastPrune = 0;
+export async function pruneExpiredData(): Promise<void> {
+  if (!supabase || Date.now() - lastPrune < 10 * 60e3) return;
+  lastPrune = Date.now();
+  const iso = (ms: number) => new Date(Date.now() - ms).toISOString();
+  const jobs: Array<PromiseLike<unknown>> = [
+    supabase.from('live_chat').delete().lt('created_at', iso(RETENTION_MS.liveChat)),
+    supabase.from('messages').delete().lt('created_at', iso(RETENTION_MS.support)),
+    supabase.from('support_tickets').delete().lt('updated_at', iso(RETENTION_MS.support)),
+    supabase.from('predictions').delete().lt('created_at', iso(RETENTION_MS.inbox)),
+    supabase.from('transactions').delete().lt('created_at', iso(RETENTION_MS.inbox)),
+    supabase.from('notifications').delete().lt('created_at', iso(RETENTION_MS.inbox)),
+  ];
+  await Promise.allSettled(jobs.map(j => Promise.resolve(j)));
+}
