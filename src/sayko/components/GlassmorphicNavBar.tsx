@@ -1,5 +1,5 @@
-import { store } from '../lib/store';
 // @ts-nocheck
+import { store } from '../lib/store';
 import React from 'react';
 import { 
   Home, 
