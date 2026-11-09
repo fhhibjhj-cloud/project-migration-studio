@@ -158,8 +158,15 @@ export const Inbox: React.FC<InboxProps> = ({ onBackToHome, onNavigateToAdmin })
       const status: 'passed' | 'failed' | 'pending' = r?.status || 'pending';
       if (status === 'failed') { hasFailedCourse = true; failedCourseIds.push(`C${cNum}`); }
       if (status === 'pending') hasPendingCourse = true;
+      const srcCourses = (slip.snapshotCourses && slip.snapshotCourses.length ? slip.snapshotCourses : courses) as Course[];
+      const course = srcCourses.find((c: any) => c.number === cNum) || (srcCourses as any[])[cNum - 1];
+      const scratched = new Set<number>((course?.horses || []).filter((h: any) => h.isScratched).map((h: any) => h.number));
       return {
         courseNum: cNum,
+        primaryChoices,
+        replacementChoices,
+        scratched,
+        substituteActivated: !!r?.substituteActivated,
         courseIdStr: `C${cNum}`,
         primaryStr: primaryChoices.length > 0 ? `[${primaryChoices.join('.')}]` : '[-]',
         replacementStr: replacementChoices.length > 0
@@ -589,13 +596,16 @@ export const Inbox: React.FC<InboxProps> = ({ onBackToHome, onNavigateToAdmin })
                         •
                       </span>
                       <span className="font-bold text-slate-900 dark:text-white tracking-wider text-sm sm:text-base">
-                        {row.primaryStr}
+                        [{row.primaryChoices.length === 0 ? '-' : row.primaryChoices.map((n: number, i: number) => (
+                          <React.Fragment key={n}>{i > 0 && '.'}<span className={row.scratched.has(n) ? 'text-red-500 line-through decoration-2' : ''}>{n}</span></React.Fragment>
+                        ))}]
                       </span>
                       <span className="text-slate-400 dark:text-slate-500 font-black text-xs select-none">
                         •
                       </span>
                       <span className="font-bold text-slate-800 dark:text-slate-200 tracking-wide text-sm sm:text-base">
-                        {row.replacementStr}
+                        ({row.replacementChoices.length === 0 ? '-' : row.replacementChoices.join('.')})
+                        {row.substituteActivated && <RotateCcw className="inline w-4 h-4 mr-1 text-blue-500 stroke-[2.6]" />}
                       </span>
                     </div>
 
@@ -659,14 +669,16 @@ export const Inbox: React.FC<InboxProps> = ({ onBackToHome, onNavigateToAdmin })
                     </div>
                   </div>
 
-                  {slip.isRefunded && (
-                    <div className="mt-2.5 pt-2.5 border-t border-red-200/60 dark:border-red-900/40 flex items-center justify-between text-xs font-bold text-amber-800 dark:text-amber-300">
-                      <span>برگشت عدم برنده ({slip.refundPercentage || store.refundRate}٪):</span>
-                      <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">
-                        +{(slip.refundedAmountTomans || Math.round(slip.totalCostTomans * ((slip.refundPercentage || store.refundRate) / 100))).toLocaleString('fa-IR')} تومان
-                      </span>
-                    </div>
-                  )}
+                  {(() => {
+                    const amt = slip.refundedAmountTomans || (slip.isRefunded ? Math.round(slip.totalCostTomans * 0.2) : 0);
+                    if (!(slip.totalCostTomans > 99000 && amt > 0)) return null;
+                    return (
+                      <div className="mt-2.5 pt-2.5 border-t border-red-200/60 dark:border-red-900/40 flex items-center justify-between text-xs font-bold">
+                        <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">+{amt.toLocaleString('fa-IR')}</span>
+                        <span className="text-emerald-700 dark:text-emerald-300">۲۰٪ هزینه ثبت برگه برگشت داده شد</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
