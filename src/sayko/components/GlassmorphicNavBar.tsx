@@ -1,3 +1,4 @@
+import { store } from '../lib/store';
 // @ts-nocheck
 import React from 'react';
 import { 
@@ -30,6 +31,16 @@ export const GlassmorphicNavBar: React.FC<GlassmorphicNavBarProps> = ({
   onNavigate,
   unreadCount = 0,
 }) => {
+  const [, force] = React.useReducer((x: number) => x + 1, 0);
+  React.useEffect(() => store.subscribe(force), []);
+  const me = store.currentUser;
+  const seenKey = `sayko_support_seen_${me?.id || ''}`;
+  const lastAdminReply = me ? Math.max(0, ...store.supportTickets.filter(t => t.userId === me.id).flatMap(t => t.messages || []).filter(m => m.sender === 'support').map(m => Number(m.timestamp) || 0)) : 0;
+  const seenAt = typeof window !== 'undefined' ? Number(localStorage.getItem(seenKey) || 0) : 0;
+  const hasNewSupport = !!me && lastAdminReply > seenAt && currentPage !== 'support';
+  React.useEffect(() => {
+    if (me && currentPage === 'support' && lastAdminReply > seenAt) localStorage.setItem(seenKey, String(Date.now()));
+  }, [currentPage, lastAdminReply, me?.id]);
   const navItems: NavItem[] = [
     { id: 'home', label: 'خانه', icon: Home },
     { id: 'shishpar', label: 'شش پره', icon: Trophy },
@@ -83,6 +94,10 @@ export const GlassmorphicNavBar: React.FC<GlassmorphicNavBarProps> = ({
                       <span className="absolute -top-1 -right-2 min-w-[15px] h-[15px] px-1 bg-red-500 text-white text-[9px] font-mono font-black rounded-full flex items-center justify-center shadow-xs animate-pulse">
                         {item.badge > 9 ? '۹+' : item.badge}
                       </span>
+                    )}
+
+                    {item.id === 'support' && hasNewSupport && (
+                      <span className="absolute -top-1.5 -right-3 px-1 h-[14px] bg-red-500 text-white text-[8px] font-black rounded-full flex items-center shadow-xs animate-pulse">NEW</span>
                     )}
 
                     {/* Live Stream Pulsing Indicator */}
