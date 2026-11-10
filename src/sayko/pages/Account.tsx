@@ -39,6 +39,8 @@ interface AccountProps {
   onOpenWithdraw: () => void;
 }
 
+const toEnDigits = (v: string) => String(v).replace(/[۰-۹]/g,(d)=>String('۰۱۲۳۴۵۶۷۸۹'.indexOf(d))).replace(/[٠-٩]/g,(d)=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+
 export const Account: React.FC<AccountProps> = ({
   currentUser,
   predictions,
@@ -58,6 +60,7 @@ export const Account: React.FC<AccountProps> = ({
   const [ibanDigits, setIbanDigits] = useState(
     currentUser?.iban ? currentUser.iban.replace(/^IR/i, '') : ''
   );
+  const isCardLocked = ((currentUser?.cardNumber || '').replace(/\D/g, '').length === 16);
   const [cardNumber, setCardNumber] = useState(currentUser?.cardNumber || '');
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
@@ -217,14 +220,21 @@ export const Account: React.FC<AccountProps> = ({
 
     // Determine finalized IBAN: once currentUser.iban is set, it cannot be changed or deleted
     let finalIban = currentUser.iban || '';
-    if (!finalIban && ibanDigits.trim().length === 24) {
-      finalIban = `IR${ibanDigits.trim()}`;
+    const cleanIban = toEnDigits(ibanDigits).replace(/\D/g, '');
+    if (!finalIban && cleanIban.length === 24) {
+      finalIban = `IR${cleanIban}`;
+    }
+    const cleanCard = toEnDigits(cardNumber).replace(/\D/g, '');
+    const finalCard = isCardLocked ? currentUser.cardNumber : (cleanCard.length === 16 ? cleanCard.replace(/(\d{4})(?=\d)/g, '$1-') : (currentUser.cardNumber || ''));
+    if (!isCardLocked && cleanCard.length > 0 && cleanCard.length !== 16) { alert('شماره کارت باید ۱۶ رقم باشد.'); return; }
+    if ((!isCardLocked && cleanCard.length === 16) || (!currentUser.iban && cleanIban.length === 24) || (!currentUser.isFullNameLocked && fullName.trim())) {
+      if (!window.confirm('هشدار: نام و نام خانوادگی، شماره کارت و شماره شبا پس از ذخیره برای همیشه قفل می‌شوند و باید به نام خود صاحب کارت باشند. آیا از صحت اطلاعات مطمئن هستید؟')) return;
     }
 
     store.updateProfile({
       fullName: currentUser.isFullNameLocked ? currentUser.fullName : (fullName.trim() || currentUser.fullName),
       iban: finalIban,
-      cardNumber: cardNumber.trim(),
+      cardNumber: finalCard,
     });
 
     setSaveSuccess(true);
@@ -539,15 +549,20 @@ export const Account: React.FC<AccountProps> = ({
                 <input
                   type="text"
                   value={cardNumber}
-                  onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                  onChange={(e) => { if (!isCardLocked) setCardNumber(formatCardNumber(toEnDigits(e.target.value))); }}
+                  disabled={isCardLocked}
                   placeholder="۶۰۳۷۹۹................"
                   dir="ltr"
                   maxLength={19}
                   className="w-full h-11 pr-10 pl-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono tracking-widest focus:outline-hidden focus:border-emerald-500 text-slate-900 dark:text-white"
                 />
-                <CreditCard className="w-4 h-4 text-slate-400 absolute right-3 top-3.5" />
+                {isCardLocked ? <Lock className="w-4 h-4 text-slate-400 absolute right-3 top-3.5" /> : <CreditCard className="w-4 h-4 text-slate-400 absolute right-3 top-3.5" />}
               </div>
-              <p className="text-[10px] text-slate-400 mt-1">شماره کارت ۱۶ رقمی معتبر شتاب جهت تسویه خودکار جوایز</p>
+              {isCardLocked ? (
+                <p className="text-[10px] text-slate-400 mt-1">شماره کارت ثبت و به دلایل امنیتی قفل گردیده است.</p>
+              ) : (
+                <p className="text-[10px] text-amber-500 mt-1">توجه: شماره کارت باید به نام خود شما باشد و پس از ذخیره برای همیشه قفل می‌شود.</p>
+              )}
             </div>
 
             {/* IBAN field: permanently locked and uneditable once saved */}
@@ -586,7 +601,7 @@ export const Account: React.FC<AccountProps> = ({
                       type="text"
                       value={ibanDigits}
                       onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, '').slice(0, 24);
+                        const val = toEnDigits(e.target.value).replace(/\D/g, '').slice(0, 24);
                         setIbanDigits(val);
                       }}
                       placeholder="000000000000000000000000 (۲۴ رقم)"
