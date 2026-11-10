@@ -108,7 +108,7 @@ export const Poll: React.FC<PollProps> = ({
   const [animatedPercentages, setAnimatedPercentages] = useState<{ [id: string]: number }>({});
 
   useEffect(() => {
-    if (hasVotedInCourse) {
+    if (true) {
       // Start from 0 and smoothly animate to target percentages over 1 second (1000ms)
       const timer = setTimeout(() => {
         const next: { [id: string]: number } = {};
@@ -269,7 +269,7 @@ export const Poll: React.FC<PollProps> = ({
               >
                 {/* Left Side: Progress Capsule / Probability Bar */}
                 <div className="flex-1 flex items-center justify-start min-w-0 pr-2">
-                  {!hasVotedInCourse ? (
+                  {false ? (
                     // Initial State: Interactive capsule before voting
                     <div className="w-full h-8 sm:h-9 rounded-full border border-dashed border-slate-300 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-900/30 hover:border-emerald-500/60 hover:bg-emerald-500/[0.04] transition-all flex items-center justify-between px-3 group">
                       <span className="text-[11px] sm:text-xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1.5" dir="rtl">
@@ -341,7 +341,7 @@ export const Poll: React.FC<PollProps> = ({
           ======================================================== */}
       <footer className="mt-auto pt-8 pb-7 text-center px-4">
         <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-500 font-mono tracking-wide select-none">
-          نظرسنجی اسب های شرکت کننده در کورس های امروز تاریخ : ۱۴۰۵.۰۸.۰۷
+          نظرسنجی اسب های شرکت کننده در کورس های امروز تاریخ : {new Intl.DateTimeFormat('fa-IR',{year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date())}
         </p>
       </footer>
 

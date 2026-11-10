@@ -68,7 +68,8 @@ export const WalletModal: React.FC<WalletModalProps> = ({
     } catch (err) {
       console.warn('WalletModal reset error:', err);
     }
-  }, [isOpen, currentUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // Handle clicking a pre-set amount button
   const handleSelectQuick = (val: number) => {
@@ -745,7 +746,7 @@ export const WalletModal: React.FC<WalletModalProps> = ({
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
-              ثبت موفق درخواست تسویه
+              عملیات با موفقیت انجام شد
             </h3>
             <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
               {withdrawSuccessMsg}

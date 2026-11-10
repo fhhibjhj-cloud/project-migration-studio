@@ -870,15 +870,7 @@ export const ShishPar: React.FC<ShishParProps> = ({
         </div>
       </section>
 
-      {/* FOOTNOTE DISCLAIMER: DYNAMIC BASED ON ADMIN REFUND RATE */}
-      {refundRate > 0 && (
-        <div className="shrink-0 text-center py-0.5">
-          <p className="text-[9px] sm:text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-tight">
-            اگر هیچ پرداختی وجود نداشته باشد، {refundRate.toLocaleString('fa-IR')}٪ هزینه برگه به کیف پول شما بازگردانده می‌شود.
-          </p>
-        </div>
-      )}
-
+      
       {/* ========================================================
           SECTION 3: BOTTOM FLOATING PREDICTION BAR
           - Row 1: "تعداد کل انتخاب : X" | Mode Selector Dropdown | "مبلغ کل : X,XXX تومان"

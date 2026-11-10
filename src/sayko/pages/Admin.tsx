@@ -2637,61 +2637,7 @@ export const Admin: React.FC<AdminProps> = ({
               </div>
             </div>
 
-            {/* Dynamic Refund Rate Setting: درصد عودت برگه شکست‌خورده */}
-            <div className="p-4 bg-white dark:bg-[#0c1626] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                    <RotateCcw className="w-4 h-4 stroke-[2.2]" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black text-slate-900 dark:text-white">
-                      درصد عودت برگه شکست‌خورده
-                    </h3>
-                    <p className="text-[10px] text-slate-400">
-                      میزان بازگشت وجه به کیف پول کاربران در صورت عدم تحقق برندگان
-                    </p>
-                  </div>
-                </div>
-
-                <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                  {selectedRefundRate === 0 ? 'غیرفعال' : `${selectedRefundRate}٪ فعال`}
-                </span>
-              </div>
-
-              {/* Selector options: [غیرفعال (0%), 9%, 12%, 15%] */}
-              <div className="grid grid-cols-4 gap-2 pt-1">
-                {[
-                  { label: 'غیرفعال (0%)', value: 0 },
-                  { label: '۹ درصد', value: 9 },
-                  { label: '۱۲ درصد', value: 12 },
-                  { label: '۱۵ درصد', value: 15 },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => {
-                      setSelectedRefundRate(opt.value);
-                      store.setRefundRate(opt.value);
-                      sound.playClick();
-                      showToast(`درصد عودت برگه شکست‌خورده به ${opt.label} تغییر یافت.`);
-                    }}
-                    className={`py-2 px-1 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                      selectedRefundRate === opt.value
-                        ? 'bg-amber-500 text-white border-amber-500 shadow-sm'
-                        : 'bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-
-              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-[#111c2e] text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                <span>کارمزد ثابت پلتفرم:</span>
-                <span className="font-bold text-slate-900 dark:text-white">۱۴٪ (پیش از محاسبه جوایز کسر می‌گردد)</span>
-              </div>
-            </div>
+            
 
             {/* Security Settings: 2FA & Sensitive Alerts */}
             <div className="p-4 bg-white dark:bg-[#0c1626] rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-3">

@@ -3,7 +3,7 @@ import { X, Percent, RotateCcw, Trophy } from 'lucide-react';
 
 const rows = [
   { pct: '۱۴٪', title: 'کارمزد سایت', desc: 'هنگام ثبت برگه کسر می‌شود و با ابطال برگه کامل برمی‌گردد.', Icon: Percent, tone: 'text-amber-600 dark:text-amber-400 bg-amber-500/10' },
-  { pct: '۲۰٪', title: 'عودت به برگه‌های شکست‌خورده', desc: 'پس از اعلام نتیجه، ۲۰٪ مبلغ هر برگهٔ بازندهٔ بالای ۹۹٬۰۰۰ تومان به کیف پولش برمی‌گردد. برگه‌های ۹۹٬۰۰۰ تومان و کمتر عودت ندارند.', Icon: RotateCcw, tone: 'text-sky-600 dark:text-sky-400 bg-sky-500/10' },
+  { pct: '۱۵٪', title: 'عودت به برگه‌های شکست‌خورده', desc: 'پس از اعلام نتیجه، ۱۵٪ مبلغ هر برگهٔ بازندهٔ بالای ۹۹٬۰۰۰ تومان به کیف پولش برمی‌گردد. برگه‌های ۹۹٬۰۰۰ تومان و کمتر عودت ندارند.', Icon: RotateCcw, tone: 'text-sky-600 dark:text-sky-400 bg-sky-500/10' },
   { pct: '۶۶٪', title: 'صندوق نهایی برندگان', desc: 'باقی‌ماندهٔ صندوق به‌طور مساوی بین برگه‌های برنده تقسیم می‌شود.', Icon: Trophy, tone: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10' },
 ];
 

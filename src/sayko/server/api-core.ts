@@ -883,7 +883,7 @@ app.post('/api/admin/set-winner', (req: Req, res: Res) => {
         db.notifications.unshift({
           id: `notif_refund_${Date.now()}_${slip.id}`,
           userId: slip.userId,
-          title: 'عودت ۲۰٪ برگه',
+          title: 'عودت ۱۵٪ برگه',
           message: `۲۰٪ مبلغ برگه شما (${refund.toLocaleString('fa-IR')} تومان) به کیف پول شما بازگشت.`,
           time: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date()),
           read: false,
