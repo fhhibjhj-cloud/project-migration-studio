@@ -213,10 +213,6 @@ export const Account: React.FC<AccountProps> = ({
     e.preventDefault();
     sound.playClick();
 
-    // If user's name is not locked yet, lock it upon saving
-    if (!currentUser.isFullNameLocked && fullName.trim()) {
-      store.lockFullName(fullName.trim());
-    }
 
     // Determine finalized IBAN: once currentUser.iban is set, it cannot be changed or deleted
     let finalIban = currentUser.iban || '';
@@ -231,6 +227,10 @@ export const Account: React.FC<AccountProps> = ({
       if (!window.confirm('هشدار: نام و نام خانوادگی، شماره کارت و شماره شبا پس از ذخیره برای همیشه قفل می‌شوند و باید به نام خود صاحب کارت باشند. آیا از صحت اطلاعات مطمئن هستید؟')) return;
     }
 
+    // If user's name is not locked yet, lock it upon saving
+    if (!currentUser.isFullNameLocked && fullName.trim()) {
+      store.lockFullName(fullName.trim());
+    }
     store.updateProfile({
       fullName: currentUser.isFullNameLocked ? currentUser.fullName : (fullName.trim() || currentUser.fullName),
       iban: finalIban,
