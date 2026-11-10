@@ -63,14 +63,14 @@ export async function downloadOfficialReport(d: ReportData) {
   // winners table
   y = 990; box(80, y, W - 160, 290, '#eff6ff', '#bfdbfe');
   txt('برندگان و جوایز', W - 120, y + 55, 32, '#1d4ed8', 'right', 800);
-  const cols = [W - 120, 860, 640, 420, 120];
+  const cols: number[] = [W - 120, 860, 640, 420, 120];
   const head = ['نوع برگه', 'صندوق', 'تعداد برگه', 'تعداد برندگان', 'جایزه هر برگه'];
-  head.forEach((h, i) => txt(h, cols[i], y + 115, 22, '#475569', i === 4 ? 'left' : 'right', 700));
+  head.forEach((h, i) => txt(h, cols[i]!, y + 115, 22, '#475569', i === 4 ? 'left' : 'right', 700));
   const tr = [
     ['شش‌پر', T(d.sixPool), fa(d.sixSlips), fa(d.sixWinners), T(d.sixPrize)],
     ['پنج‌پر', T(d.fivePool), fa(d.fiveSlips), fa(d.fiveWinners), T(d.fivePrize)],
   ];
-  tr.forEach((r, ri) => r.forEach((v, i) => txt(v, cols[i], y + 180 + ri * 60, 24, '#0f172a', i === 4 ? 'left' : 'right', 600)));
+  tr.forEach((r, ri) => r.forEach((v, i) => txt(v, cols[i]!, y + 180 + ri * 60, 24, '#0f172a', i === 4 ? 'left' : 'right', 600)));
   // statement
   y = 1310; box(80, y, W - 160, 200, '#ffffff');
   txt('بیانیه شفافیت', W - 120, y + 55, 30, '#0f172a', 'right', 800);
