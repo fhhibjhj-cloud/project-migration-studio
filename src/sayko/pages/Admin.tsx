@@ -1,7 +1,6 @@
 // @ts-nocheck
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import jsPDF from 'jspdf';
 import { 
   Users, 
   Trophy, 
@@ -209,6 +208,215 @@ export const Admin: React.FC<AdminProps> = ({
   const [liveIsActive, setLiveIsActive] = useState<boolean>(store.liveStreamIsActive);
   const [announcementText, setAnnouncementText] = useState<string>(store.liveAnnouncementText);
   const [showAnnouncement, setShowAnnouncement] = useState<boolean>(store.isAnnouncementVisible);
+
+  // Messages / Tickets State
+  const [ticketSearchQuery, setTicketSearchQuery] = useState('');
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<'all' | 'new' | 'pending' | 'answered' | 'closed'>('all');
+  const [ticketsList, setTicketsList] = useState<SupportTicket[]>(store.supportTickets);
+
+  // Settings State
+  const [alertNewRequests, setAlertNewRequests] = useState(store.adminAlerts.newRequests);
+  const [alertNewMessages, setAlertNewMessages] = useState(store.adminAlerts.newMessages);
+  const [alertHighValueTx, setAlertHighValueTx] = useState(store.adminAlerts.highValueTx);
+  const [twoFactorAuth, setTwoFactorAuth] = useState(store.admin2FA);
+  const [sensitiveAlerts, setSensitiveAlerts] = useState(store.adminSensitiveAlerts);
+  const [isWithdrawalActive, setIsWithdrawalActive] = useState<boolean>(store.isWithdrawalEnabled);
+  const [selectedPalette, setSelectedPalette] = useState<'emerald' | 'blue' | 'purple'>('emerald');
+
+  const showToast = (msg: string) => {
+    setSaveSuccessToast(msg);
+    setTimeout(() => setSaveSuccessToast(null), 3000);
+  };
+
+  const handleCopy = (text: string) => {
+    sound.playClick();
+    navigator.clipboard?.writeText(text);
+    setCopiedText(text);
+    setTimeout(() => setCopiedText(null), 2000);
+  };
+
+  // Selected course object
+  const courses = (activeWeek && Array.isArray(activeWeek.courses) && activeWeek.courses.length > 0)
+    ? activeWeek.courses
+    : (store.activeWeek?.courses || []);
+  const selectedCourse = courses.find((c) => c.number === selectedCourseNum) || courses[0];
+
+  // Course management handlers
+  const handleToggleHorseScratched = (horseId: string) => {
+    sound.playClick();
+    store.toggleHorseScratched(selectedCourseNum, horseId);
+  };
+
+  const handleToggleHorseWinner = (horseNumber: number) => {
+    sound.playClick();
+    const nextWinner = selectedCourse?.winningHorseNumber === horseNumber ? undefined : horseNumber;
+    store.setCourseWinningHorse(selectedCourseNum, nextWinner);
+  };
+
+  const handleAddHorse = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newHorseName.trim()) return;
+    sound.playSuccess();
+    const currentHorsesCount = selectedCourse?.horses.length || 0;
+    store.addHorseToCourse(selectedCourseNum, {
+      number: currentHorsesCount + 1,
+      name: newHorseName.trim(),
+      jockey: '',
+      trainer: '',
+      pedigree: '',
+      silkColor: newHorseSilk,
+      silkPattern: 'solid',
+      rating: 85,
+      odds: 2.5,
+      isScratched: false,
+      isReplacement: false,
+    });
+    setNewHorseName('');
+    showToast(`اسب «${newHorseName.trim()}» به کورس ${selectedCourseNum} اضافه شد.`);
+  };
+
+  const handleClearAllHorses = () => {
+    sound.playAlert();
+    store.clearAllHorses();
+    setIsClearAllConfirmOpen(false);
+    showToast('تمامی اسب‌ها حذف شدند و صندوق کل روی ۰ ریست گردید.');
+  };
+
+  const handlePublishConfig = () => {
+    sound.playSuccess();
+    store.publishCourseConfig();
+    showToast('پیکربندی کورس‌ها ثبت و در تمامی صفحات پیش‌بینی منتشر شد.');
+  };
+
+  // Dynamic Live Analytics (100% Real Live Data - Requirement 3)
+  const totalUsersCount = usersList.length;
+  const activeUsersCount = useMemo(() => {
+    return usersList.filter(u => u.isOnline).length;
+  }, [usersList]);
+  const bannedUsersCount = useMemo(() => {
+    return usersList.filter(u => u.isBanned).length;
+  }, [usersList]);
+  const totalUsersBalance = useMemo(() => {
+    return usersList.reduce((sum, u) => sum + (u.balanceTomans || 0), 0);
+  }, [usersList]);
+
+  // Real Dynamic Transaction Analytics (100% Real Data & Reset Support - Requirement 3)
+  const { todayDepositsTomans, todayWithdrawalsTomans } = useMemo(() => {
+    const nowFa = new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short' }).format(new Date());
+    const resetTime = store.todayStatsResetTimestamp || 0;
+    let tDep = 0;
+    let tWth = 0;
+
+    transactions.forEach(t => {
+      if (t.status === 'approved') {
+        let txTimestamp = 0;
+        if (t.id && t.id.startsWith('tx_')) {
+          const numPart = parseInt(t.id.replace('tx_', ''), 10);
+          if (!isNaN(numPart)) txTimestamp = numPart;
+        }
+
+        const isAfterReset = resetTime > 0 ? (txTimestamp > resetTime) : true;
+        const isToday = !t.date || t.date.includes(nowFa) || t.date.includes('امروز') || t.date.includes('هم‌اکنون');
+
+        if (isAfterReset && isToday) {
+          if (t.type === 'deposit') {
+            tDep += (t.amountTomans || 0);
+          } else if (t.type === 'withdraw') {
+            tWth += (t.amountTomans || 0);
+          }
+        }
+      }
+    });
+
+    return {
+      todayDepositsTomans: tDep,
+      todayWithdrawalsTomans: tWth,
+    };
+  }, [transactions, store.todayStatsResetTimestamp]);
+
+  // Reset page when filter or search changes (Requirement 4)
+  useEffect(() => {
+    setTxPage(1);
+  }, [txFilter, txSearchQuery]);
+
+
+
+  // Live Support Tickets Dynamic Analytics (Requirement 1)
+  const newTicketsCount = useMemo(() => ticketsList.filter(t => t.status === 'new').length, [ticketsList]);
+  const pendingTicketsCount = useMemo(() => ticketsList.filter(t => t.status === 'pending').length, [ticketsList]);
+  const answeredTicketsCount = useMemo(() => ticketsList.filter(t => t.status === 'answered').length, [ticketsList]);
+  const closedTicketsCount = useMemo(() => ticketsList.filter(t => t.status === 'closed').length, [ticketsList]);
+
+  // User Management
+  const filteredUsers = useMemo(() => {
+    return usersList.filter((u) => {
+      if (!userSearchQuery.trim()) return true;
+      const q = userSearchQuery.trim().toLowerCase();
+      return (
+        u.fullName.toLowerCase().includes(q) ||
+        u.username.toLowerCase().includes(q) ||
+        u.id.toLowerCase().includes(q) ||
+        (u.numericId && u.numericId.toString().includes(q)) ||
+        (u.phone && u.phone.includes(q))
+      );
+    });
+  }, [userSearchQuery, usersList]);
+
+  // Transactions Filtering & Pending
+  const pendingTransactions = useMemo(() => {
+    return transactions.filter((t) => t.status === 'pending');
+  }, [transactions]);
+
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((t) => {
+      if (txFilter === 'pending' && t.status !== 'pending') return false;
+      if (txFilter === 'deposit' && t.type !== 'deposit') return false;
+      if (txFilter === 'withdraw' && t.type !== 'withdraw') return false;
+      if (txSearchQuery.trim()) {
+        const q = txSearchQuery.trim().toLowerCase();
+        const user = usersList.find((u) => u.id === t.userId);
+        const matchTracking = (t.trackingCode || '').toLowerCase().includes(q);
+        const matchUserId = (t.userId || '').toLowerCase().includes(q);
+        const matchUserNum = String(t.userNumericId || user?.numericId || '').includes(q);
+        const matchUserName = (t.userName || '').toLowerCase().includes(q);
+        if (!matchTracking && !matchUserId && !matchUserNum && !matchUserName) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [transactions, txFilter, txSearchQuery, usersList]);
+
+  // Compact pagination (5 items per page - Requirement 4)
+  const TX_PER_PAGE = 5;
+  const totalTxPages = Math.max(1, Math.ceil(filteredTransactions.length / TX_PER_PAGE));
+  const paginatedTransactions = useMemo(() => {
+    const start = (txPage - 1) * TX_PER_PAGE;
+    return filteredTransactions.slice(start, start + TX_PER_PAGE);
+  }, [filteredTransactions, txPage]);
+
+  const handleDownloadPdfReport = async () => {
+    try {
+      sound.playSuccess();
+      const { downloadOfficialReport } = await import('../lib/officialReport');
+      const pd: any = profitData;
+      await downloadOfficialReport({
+        title: activeWeek.title || 'مسابقه هفتگی',
+        raceDate: activeWeek.startDatePersian || new Date().toLocaleDateString('fa-IR'),
+        unitPrice: pd.unitPriceTomans || 2000,
+        grossFund: pd.grossFund, adminProfit: pd.adminProfit, refund: pd.totalRefundTomans || 0,
+        winnersPayout: pd.winnersPayout,
+        sixSlips: pd.sixPrTotalSlips, fiveSlips: pd.fivePrTotalSlips,
+        sixWinners: pd.sixPrWinnersCount, fiveWinners: pd.fivePrWinnersCount,
+        sixPrize: pd.sixPrReceiptPrize, fivePrize: pd.fivePrReceiptPrize,
+        sixPool: pd.sixPrFund, fivePool: pd.fivePrFund,
+      });
+      showToast('گزارش رسمی با موفقیت ذخیره شد.');
+    } catch (err) {
+      console.warn('Report error:', err);
+      showToast('خطا در تولید گزارش.');
+    }
+  };
 
   // Messages / Tickets State
   const [ticketSearchQuery, setTicketSearchQuery] = useState('');
@@ -644,7 +852,7 @@ export const Admin: React.FC<AdminProps> = ({
                   className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-md shadow-blue-500/25 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  <span>دانلود گزارش رسمی PDF</span>
+                  <span>دانلود گزارش رسمی</span>
                 </button>
               </div>
             </div>
