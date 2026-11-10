@@ -865,7 +865,7 @@ export class AppStore {
     this.admin2FA = loadFromStorage('admin_2fa', false);
     this.adminSensitiveAlerts = loadFromStorage('admin_sensitive_alerts', true);
     this.isWithdrawalEnabled = loadFromStorage('admin_withdrawal_enabled', true);
-    this.refundRate = loadFromStorage('admin_refund_rate', 9);
+    this.refundRate = 15; // fixed automatic refund rate
     this.isSettlementCompleted = loadFromStorage('admin_settlement_completed', false);
     this.customWinningPrize = loadFromStorage('custom_winning_prize', 23000000);
     this.isNavBarEnabled = loadFromStorage('is_navbar_enabled', true);
@@ -1835,7 +1835,7 @@ export class AppStore {
 
   // --- REFUND RATES & PROFIT ANALYTICS ---
   public setRefundRate(rate: number): void {
-    this.refundRate = rate;
+    this.refundRate = 15;
     saveToStorage('admin_refund_rate', this.refundRate);
     this.notify();
   }

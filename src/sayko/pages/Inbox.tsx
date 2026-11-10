@@ -219,7 +219,7 @@ export const Inbox: React.FC<InboxProps> = ({ onBackToHome, onNavigateToAdmin })
   const userDeposits = useMemo(() => {
     const uid = store.currentUser?.id;
     if (!uid) return [];
-    return transactions.filter((t) => (t.type === 'deposit' || t.type === 'refund') && t.userId === uid);
+    return transactions.filter((t) => (t.type === 'deposit' || t.type === 'refund' || t.type === 'withdraw') && t.userId === uid);
   }, [transactions]);
 
   // Counts for each filter tab badge (dynamically scoped by typeFilter)
@@ -471,7 +471,7 @@ export const Inbox: React.FC<InboxProps> = ({ onBackToHome, onNavigateToAdmin })
                     </div>
                     <div>
                       <h3 className="text-sm font-extrabold text-slate-900 dark:text-white">
-                        {isRefund ? (dep.title || 'تراکنش / برگشت') : 'افزایش اعتبار'}
+                        {isRefund ? (dep.title || 'تراکنش / برگشت') : dep.type === 'withdraw' ? 'برداشت از موجودی' : 'افزایش اعتبار'}
                       </h3>
                       <span className="text-[10.5px] text-slate-400 font-mono">
                         {formatDateWithPersianDay(dep.date, dep.id.startsWith('tx_') ? parseInt(dep.id.replace('tx_', ''), 10) : undefined)}
@@ -500,7 +500,7 @@ export const Inbox: React.FC<InboxProps> = ({ onBackToHome, onNavigateToAdmin })
                       {isRefund ? 'مبلغ برگشت به کیف پول:' : 'مبلغ درخواست:'}
                     </span>
                     <span className="font-mono font-black text-sm text-emerald-600 dark:text-emerald-400">
-                      +{dep.amountTomans.toLocaleString('fa-IR')} تومان
+                      {dep.type === 'withdraw' ? '-' : '+'}{dep.amountTomans.toLocaleString('fa-IR')} تومان
                     </span>
                   </div>
                   <div className="flex justify-between items-center text-xs text-slate-400 dark:text-slate-400 px-1">
@@ -675,7 +675,7 @@ export const Inbox: React.FC<InboxProps> = ({ onBackToHome, onNavigateToAdmin })
                     return (
                       <div className="mt-2.5 pt-2.5 border-t border-red-200/60 dark:border-red-900/40 flex items-center justify-between text-xs font-bold">
                         <span className="font-mono font-black text-emerald-600 dark:text-emerald-400">+{amt.toLocaleString('fa-IR')}</span>
-                        <span className="text-emerald-700 dark:text-emerald-300">۲۰٪ هزینه ثبت برگه برگشت داده شد</span>
+                        <span className="text-emerald-700 dark:text-emerald-300">۱۵٪ هزینه ثبت برگه برگشت داده شد</span>
                       </div>
                     );
                   })()}
