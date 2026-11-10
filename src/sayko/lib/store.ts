@@ -2077,7 +2077,7 @@ export class AppStore {
 
     if (sixPrWinnersCount > 0) {
       sixPrAdminProfit = Math.round(sixPrGrossFund * SITE_COMMISSION_RATE);
-      // Losing slips get 20% of their paid amount back; the remaining 66% goes to winners
+      // Losing slips over 99k get 15% back; the remaining 71% goes to winners
       sixPrRefundTomans = sixPrSlips.filter(p => p.status === 'lost').reduce((sum, p) => sum + loserRefund(Number(p.totalCostTomans) || 0), 0);
       sixPrWinnersPayout = Math.max(0, sixPrGrossFund - sixPrAdminProfit - sixPrRefundTomans);
       sixPrReceiptPrize = Math.round(sixPrWinnersPayout / sixPrWinnersCount);
@@ -2101,7 +2101,7 @@ export class AppStore {
 
     if (fivePrWinnersCount > 0) {
       fivePrAdminProfit = Math.round(fivePrGrossFund * SITE_COMMISSION_RATE);
-      // Losing slips get 20% of their paid amount back; the remaining 66% goes to winners
+      // Losing slips over 99k get 15% back; the remaining 71% goes to winners
       fivePrRefundTomans = fivePrSlips.filter(p => p.status === 'lost').reduce((sum, p) => sum + loserRefund(Number(p.totalCostTomans) || 0), 0);
       fivePrWinnersPayout = Math.max(0, fivePrGrossFund - fivePrAdminProfit - fivePrRefundTomans);
       fivePrReceiptPrize = Math.round(fivePrWinnersPayout / fivePrWinnersCount);
