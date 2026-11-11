@@ -670,7 +670,7 @@ export const Inbox: React.FC<InboxProps> = ({ onBackToHome, onNavigateToAdmin })
                   </div>
 
                   {(() => {
-                    const amt = slip.refundedAmountTomans || (slip.isRefunded ? Math.round(slip.totalCostTomans * 0.2) : 0);
+                    const amt = slip.refundedAmountTomans || (slip.totalCostTomans > 99000 ? Math.round(slip.totalCostTomans * 0.15) : 0);
                     if (!(slip.totalCostTomans > 99000 && amt > 0)) return null;
                     return (
                       <div className="mt-2.5 pt-2.5 border-t border-red-200/60 dark:border-red-900/40 flex items-center justify-between text-xs font-bold">

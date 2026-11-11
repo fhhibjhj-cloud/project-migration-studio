@@ -790,41 +790,6 @@ export const Admin: React.FC<AdminProps> = ({
               </div>
             </div>
 
-            {/* 4. NO-WINNER REFUND POLICY & EXECUTION CARD */}
-            <div className="rounded-[24px] bg-white dark:bg-[#0c1626] border border-amber-200/80 dark:border-amber-900/40 p-5 shadow-xs space-y-3.5">
-              <div className="flex items-center justify-between border-b border-amber-100 dark:border-amber-900/30 pb-2.5">
-                <span className="text-xs font-black text-amber-900 dark:text-amber-300 flex items-center gap-2">
-                  <RotateCcw className="w-4 h-4 text-amber-500" />
-                  <span>قانون عودت در صورت عدم وجود برنده (شش‌پره و پنج‌پره)</span>
-                </span>
-                <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold bg-amber-500/15 px-2.5 py-0.5 rounded-full border border-amber-500/25">
-                  درصد عودت فعال: {store.refundRate}٪
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                در صورتی که هیچ برنده‌ای در کل برگه‌های شش‌پره و پنج‌پره وجود نداشته باشد (۰ برنده)، به میزان <span className="font-black text-amber-600 dark:text-amber-400">{store.refundRate} درصد</span> از مبلغ پرداختی رسیدها به کیف پول هر کاربر برگشت داده شده و پیام تراکنش با عنوان «تراکنش / برگشت» و متن «برگشت {store.refundRate} درصد مبلغ پرداختی شما برای ثبت رسید به شما برگشت داده شد» به صندوق پیام ارسال می‌شود. مابقی صندوق به عنوان سود قطعی سامانه محاسبه می‌گردد.
-              </p>
-              <div className="flex items-center justify-between pt-1 flex-wrap gap-2">
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-                  <span className={`w-2 h-2 rounded-full ${profitData.totalWinnersCount > 0 ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                  <span>
-                    وضعیت فعلی مسابقه: {profitData.totalWinnersCount > 0 ? `${profitData.totalWinnersCount.toLocaleString('fa-IR')} برنده ثبت شده` : 'بدون برنده (۰ برنده)'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    sound.playClick();
-                    const res = store.executeNoWinnerRefunds();
-                    showToast(res.message);
-                  }}
-                  className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-md shadow-amber-500/20 transition-all flex items-center gap-1.5 cursor-pointer active:scale-95"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>اجرای فوری عودت عدم برنده ({store.refundRate}٪)</span>
-                </button>
-              </div>
-            </div>
 
             {/* 5. AUTOMATED POOL & WINNER SETTLEMENT STATUS */}
             <div className="rounded-[24px] bg-white dark:bg-[#0c1626] border border-slate-200 dark:border-slate-800 p-5 shadow-xs space-y-3">
