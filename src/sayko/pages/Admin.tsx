@@ -418,31 +418,6 @@ export const Admin: React.FC<AdminProps> = ({
     }
   };
 
-  // Messages / Tickets State
-  const [ticketSearchQuery, setTicketSearchQuery] = useState('');
-  const [ticketStatusFilter, setTicketStatusFilter] = useState<'all' | 'new' | 'pending' | 'answered' | 'closed'>('all');
-  const [ticketsList, setTicketsList] = useState<SupportTicket[]>(store.supportTickets);
-
-  // Settings State
-  const [alertNewRequests, setAlertNewRequests] = useState(store.adminAlerts.newRequests);
-  const [alertNewMessages, setAlertNewMessages] = useState(store.adminAlerts.newMessages);
-  const [alertHighValueTx, setAlertHighValueTx] = useState(store.adminAlerts.highValueTx);
-  const [twoFactorAuth, setTwoFactorAuth] = useState(store.admin2FA);
-  const [sensitiveAlerts, setSensitiveAlerts] = useState(store.adminSensitiveAlerts);
-  const [isWithdrawalActive, setIsWithdrawalActive] = useState<boolean>(store.isWithdrawalEnabled);
-  const [selectedPalette, setSelectedPalette] = useState<'emerald' | 'blue' | 'purple'>('emerald');
-
-  const showToast = (msg: string) => {
-    setSaveSuccessToast(msg);
-    setTimeout(() => setSaveSuccessToast(null), 3000);
-  };
-
-  const handleCopy = (text: string) => {
-    sound.playClick();
-    navigator.clipboard?.writeText(text);
-    setCopiedText(text);
-    setTimeout(() => setCopiedText(null), 2000);
-  };
 
   // Selected course object
   const courses = (activeWeek && Array.isArray(activeWeek.courses) && activeWeek.courses.length > 0)
