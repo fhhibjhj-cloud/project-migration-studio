@@ -90,13 +90,29 @@ export async function downloadOfficialReport(d: ReportData) {
   txt('تأیید شده', sx, sy + 66, 18, '#fff8dc', 'center', 700);
 
   const blob: Blob = await new Promise((r) => c.toBlob((b) => r(b!), 'image/png'));
-  const name = `SAYKO_Report_${code}.png`;
-  const file = new File([blob], name, { type: 'image/png' });
-  const nav = navigator as any;
-  if (nav.canShare?.({ files: [file] })) {
-    try { await nav.share({ files: [file], title: 'گزارش رسمی سایکو' }); return; } catch (e: any) { if (e?.name === 'AbortError') return; }
-  }
+  return { blob, dataUrl: c.toDataURL('image/png'), code, width: W, height: H };
+}
+
+export type GeneratedReport = Awaited<ReturnType<typeof downloadOfficialReport>>;
+
+export function saveBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+export async function shareOrSave(blob: Blob, name: string) {
+  const file = new File([blob], name, { type: blob.type });
+  const nav = navigator as any;
+  if (matchMedia('(pointer: coarse)').matches && nav.canShare?.({ files: [file] })) {
+    try { await nav.share({ files: [file], title: 'گزارش رسمی سایکو' }); return; } catch (e: any) { if (e?.name === 'AbortError') return; }
+  }
+  saveBlob(blob, name);
+}
+
+export async function buildReportPdf(r: GeneratedReport): Promise<Blob> {
+  const { jsPDF } = await import('jspdf');
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  pdf.addImage(r.dataUrl, 'PNG', 0, 0, 210, 297);
+  return pdf.output('blob');
 }

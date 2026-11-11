@@ -97,6 +97,9 @@ export const Admin: React.FC<AdminProps> = ({
   // Profit & Analytics
   const [selectedRefundRate, setSelectedRefundRate] = useState<number>(store.refundRate);
   const profitData = store.getProfitAnalytics();
+  const [reportPreview, setReportPreview] = useState<import('../lib/officialReport').GeneratedReport | null>(null);
+  const [reportPdf, setReportPdf] = useState<Blob | null>(null);
+  useEffect(() => { setReportPdf(null); if (reportPreview) import('../lib/officialReport').then(m => m.buildReportPdf(reportPreview)).then(setReportPdf).catch(() => {}); }, [reportPreview]);
 
   const handleConfirmResetProfit = () => {
     sound.playSuccess();
@@ -400,7 +403,7 @@ export const Admin: React.FC<AdminProps> = ({
       sound.playSuccess();
       const { downloadOfficialReport } = await import('../lib/officialReport');
       const pd: any = profitData;
-      await downloadOfficialReport({
+      const rep = await downloadOfficialReport({
         title: activeWeek.title || 'مسابقه هفتگی',
         raceDate: activeWeek.startDatePersian || new Date().toLocaleDateString('fa-IR'),
         unitPrice: pd.unitPriceTomans || 2000,
@@ -411,7 +414,7 @@ export const Admin: React.FC<AdminProps> = ({
         sixPrize: pd.sixPrReceiptPrize, fivePrize: pd.fivePrReceiptPrize,
         sixPool: pd.sixPrFund, fivePool: pd.fivePrFund,
       });
-      showToast('گزارش رسمی با موفقیت ذخیره شد.');
+      setReportPreview(rep);
     } catch (err) {
       console.warn('Report error:', err);
       showToast('خطا در تولید گزارش.');
@@ -3183,6 +3186,24 @@ export const Admin: React.FC<AdminProps> = ({
                 <Send className="w-3.5 h-3.5" />
                 <span>ارسال پیام</span>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {reportPreview && (
+        <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-sm flex items-center justify-center p-3" onClick={() => setReportPreview(null)}>
+          <div className="w-full max-w-md max-h-[92vh] flex flex-col rounded-3xl bg-white dark:bg-[#0c1626] border border-amber-400/40 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()} dir="rtl">
+            <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+              <span className="font-black text-sm text-slate-900 dark:text-white">پیش‌نمایش گزارش رسمی</span>
+              <button type="button" onClick={() => setReportPreview(null)} className="text-slate-500 text-lg px-2">✕</button>
+            </div>
+            <div className="overflow-auto p-3 bg-slate-100 dark:bg-slate-900">
+              <img src={reportPreview.dataUrl} alt="گزارش رسمی سایکو" className="w-full rounded-xl shadow" />
+              <p className="text-[11px] text-center text-slate-500 mt-2">برای ذخیره مستقیم در گالری، انگشت را روی تصویر نگه دارید و «ذخیره تصویر» را بزنید.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-2 p-3">
+              <button type="button" disabled={!reportPdf} onClick={() => reportPdf && import('../lib/officialReport').then(m => { m.saveBlob(reportPdf, `SAYKO_Report_${reportPreview.code}.pdf`); showToast('فایل PDF دانلود شد.'); })} className="py-3 rounded-2xl bg-rose-600 text-white font-black text-xs disabled:opacity-50">دانلود PDF</button>
+              <button type="button" onClick={() => import('../lib/officialReport').then(m => m.shareOrSave(reportPreview.blob, `SAYKO_Report_${reportPreview.code}.png`))} className="py-3 rounded-2xl bg-emerald-600 text-white font-black text-xs">ذخیره در گالری</button>
             </div>
           </div>
         </div>
