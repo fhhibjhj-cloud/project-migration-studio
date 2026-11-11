@@ -68,6 +68,15 @@ interface AdminProps {
   onOpenAuth: () => void;
 }
 
+
+function txTimestamp(t: any): number {
+  const m = String(t?.id || '').match(/(\d{13})/);
+  if (m) return Number(m[1]);
+  const c = t?.createdAt || t?.created_at || t?.timestamp;
+  const n = c ? new Date(c).getTime() : NaN;
+  return Number.isFinite(n) ? n : 0;
+}
+
 export type AdminTab = 'profit' | 'transactions' | 'races' | 'users' | 'live' | 'messages' | 'settings';
 
 export const Admin: React.FC<AdminProps> = ({
@@ -205,6 +214,8 @@ export const Admin: React.FC<AdminProps> = ({
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [txPage, setTxPage] = useState<number>(1);
   const [txFilter, setTxFilter] = useState<'all' | 'pending' | 'deposit' | 'withdraw'>('all');
+  const [txTimeFilter, setTxTimeFilter] = useState<'all' | 'hour' | 'today' | 'yesterday'>('all');
+  const [selectedTxDetail, setSelectedTxDetail] = useState<any | null>(null);
 
   // Live Stream State
   const [streamUrlInput, setStreamUrlInput] = useState<string>(store.liveStreamUrl);
@@ -375,6 +386,16 @@ export const Admin: React.FC<AdminProps> = ({
       if (txFilter === 'pending' && t.status !== 'pending') return false;
       if (txFilter === 'deposit' && t.type !== 'deposit') return false;
       if (txFilter === 'withdraw' && t.type !== 'withdraw') return false;
+      if (txTimeFilter !== 'all') {
+        if (t.type !== 'deposit') return false;
+        const ts = txTimestamp(t);
+        if (!ts) return false;
+        const now = new Date();
+        const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        if (txTimeFilter === 'hour' && Date.now() - ts > 3600e3) return false;
+        if (txTimeFilter === 'today' && ts < startToday) return false;
+        if (txTimeFilter === 'yesterday' && (ts < startToday - 86400e3 || ts >= startToday)) return false;
+      }
       if (txSearchQuery.trim()) {
         const q = txSearchQuery.trim().toLowerCase();
         const user = usersList.find((u) => u.id === t.userId);
@@ -388,7 +409,7 @@ export const Admin: React.FC<AdminProps> = ({
       }
       return true;
     });
-  }, [transactions, txFilter, txSearchQuery, usersList]);
+  }, [transactions, txFilter, txTimeFilter, txSearchQuery, usersList]);
 
   // Compact pagination (5 items per page - Requirement 4)
   const TX_PER_PAGE = 5;
@@ -1838,6 +1859,50 @@ export const Admin: React.FC<AdminProps> = ({
               )}
             </div>
 
+            {selectedTxDetail && (() => {
+              const tx = selectedTxDetail; const u = usersList.find((x) => x.id === tx.userId); const ts = txTimestamp(tx);
+              const rel = ts ? (() => { const m = Math.floor((Date.now() - ts) / 60000); return m < 1 ? 'هم‌اکنون' : m < 60 ? `${m.toLocaleString('fa-IR')} دقیقه پیش` : m < 1440 ? `${Math.floor(m/60).toLocaleString('fa-IR')} ساعت پیش` : `${Math.floor(m/1440).toLocaleString('fa-IR')} روز پیش`; })() : '';
+              const rows: [string, string][] = [
+                ['نوع', tx.type === 'deposit' ? 'واریز (افزایش موجودی)' : tx.type === 'withdraw' ? 'برداشت' : tx.type === 'refund' ? 'عودت' : tx.type === 'prediction_win' ? 'جایزه پیش‌بینی' : 'پیش‌بینی'],
+                ['وضعیت', tx.status === 'approved' ? 'تأیید شده' : tx.status === 'rejected' ? 'رد شده' : 'در انتظار'],
+                ['مبلغ', `${Number(tx.amountTomans || 0).toLocaleString('fa-IR')} تومان`],
+                ...(tx.approvedAmountTomans ? [['مبلغ تأییدشده', `${Number(tx.approvedAmountTomans).toLocaleString('fa-IR')} تومان`] as [string, string]] : []),
+                ['کاربر', `${tx.userName}${u?.username ? ` (@${u.username})` : ''}`],
+                ['شناسه کاربر', `#${tx.userNumericId || u?.numericId || '-'}`],
+                ['کد پیگیری', tx.trackingCode || '-'],
+                ['تاریخ و ساعت', ts ? new Intl.DateTimeFormat('fa-IR', { dateStyle: 'full', timeStyle: 'medium' }).format(new Date(ts)) : tx.date],
+                ...(rel ? [['زمان گذشته', rel] as [string, string]] : []),
+                ...((tx.cardNumber || u?.cardNumber) ? [['شماره کارت', String(tx.cardNumber || u?.cardNumber).replace(/\D/g, '')] as [string, string]] : []),
+                ...((tx.iban || u?.iban) ? [['شبا', String(tx.iban || u?.iban)] as [string, string]] : []),
+                ...(tx.title ? [['عنوان', tx.title] as [string, string]] : []),
+                ...(tx.description ? [['توضیحات', tx.description] as [string, string]] : []),
+              ];
+              return (
+                <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setSelectedTxDetail(null)}>
+                  <div dir="rtl" className="w-full max-w-md bg-white dark:bg-[#0c1626] rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3 max-h-[85vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-black text-slate-900 dark:text-white">جزئیات تراکنش</span>
+                      <button onClick={() => setSelectedTxDetail(null)} className="p-1 text-slate-400 cursor-pointer"><X className="w-4 h-4" /></button>
+                    </div>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {rows.map(([k, v]) => (
+                        <div key={k} className="flex items-start justify-between gap-3 py-2 text-xs">
+                          <span className="text-slate-400 shrink-0">{k}</span>
+                          <span className="font-bold text-slate-900 dark:text-slate-100 text-left break-all" dir={/^[#A-Za-z0-9_\-]+$/.test(v) ? 'ltr' : 'rtl'}>{v}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {tx.status === 'pending' && (
+                      <div className="flex gap-2">
+                        <button onClick={() => { store.updateTransactionStatus(tx.id, 'approved'); showToast('درخواست تایید شد.'); setSelectedTxDetail(null); }} className="flex-1 py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs cursor-pointer">تأیید</button>
+                        <button onClick={() => { store.updateTransactionStatus(tx.id, 'rejected'); showToast('درخواست رد شد.'); setSelectedTxDetail(null); }} className="flex-1 py-2 rounded-xl bg-red-600 text-white font-bold text-xs cursor-pointer">رد</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Transactions Table & Pagination */}
             <div className="bg-white dark:bg-[#0c1626] rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 shadow-xs space-y-3">
               <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 flex-wrap gap-2">
@@ -1895,6 +1960,14 @@ export const Admin: React.FC<AdminProps> = ({
                 </div>
               </div>
 
+              <div className="flex items-center gap-1 text-[10px] flex-wrap">
+                <span className="text-slate-400 font-bold ml-1">درخواست افزایش:</span>
+                {([['all','همه زمان‌ها'],['hour','یک ساعت پیش'],['today','امروز'],['yesterday','دیروز']] as const).map(([k,l]) => (
+                  <button key={k} onClick={() => setTxTimeFilter(k)}
+                    className={`px-2.5 py-1 rounded-lg font-bold cursor-pointer ${txTimeFilter === k ? 'bg-emerald-600 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}`}>{l}</button>
+                ))}
+              </div>
+
               {/* Search Bar with live search and clear button */}
               <div className="relative w-full">
                 <Search className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -1931,7 +2004,8 @@ export const Admin: React.FC<AdminProps> = ({
                     return (
                       <div 
                         key={tx.id ? `hist_tx_${tx.id}` : `hist_idx_${fIdx}`}
-                        className="py-2 px-3 rounded-xl bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/80 hover:bg-slate-100/70 dark:hover:bg-slate-800/40 transition-colors flex items-center justify-between text-xs gap-2 flex-wrap"
+                        onClick={(e) => { if ((e.target as HTMLElement).closest('button')) return; setSelectedTxDetail(tx); }}
+                        className="py-2 px-3 rounded-xl bg-slate-50/90 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800/80 hover:bg-slate-100/70 dark:hover:bg-slate-800/40 transition-colors flex items-center justify-between text-xs gap-2 flex-wrap cursor-pointer"
                       >
                         {/* Right Details (RTL) */}
                         <div className="flex items-center gap-2 min-w-0">
