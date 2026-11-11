@@ -30,7 +30,7 @@ interface DisplayMessage {
   timestamp?: number;
 }
 
-const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
+const TEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const Support: React.FC<SupportProps> = ({ onBackToHome, onOpenAuth }) => {
   const [message, setMessage] = useState('');
@@ -284,6 +284,9 @@ export const Support: React.FC<SupportProps> = ({ onBackToHome, onOpenAuth }) =>
       <div className="bg-white dark:bg-[#151d2a] rounded-[24px] p-3.5 sm:p-4 shadow-xs border border-slate-100 dark:border-slate-800/80 flex flex-col flex-1 min-h-[300px] max-h-[calc(100dvh-260px)] sm:max-h-none sm:h-[450px]">
         
         {/* Chat Feed */}
+        <div className="mb-2 px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-700 dark:text-amber-300 font-bold text-center">
+          پیام‌های پشتیبانی پس از گذشت ۱ هفته (۷ روز) به‌صورت خودکار و دائمی حذف می‌شوند.
+        </div>
         <div className="flex-1 overflow-y-auto space-y-3 pr-1 py-2">
           {messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-2">

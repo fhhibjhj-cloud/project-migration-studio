@@ -2540,7 +2540,16 @@ export class AppStore {
 
   // --- PERSISTENT SUPPORT CHAT & INBOX MESSAGES ---
   public cleanupExpiredSupportMessages(): void {
-    // Persistent messages: Messages and conversations are NEVER auto-cleared, deleted, or expired!
+    const cutoff = Date.now() - 7 * 24 * 3600 * 1000;
+    let changed = false;
+    this.supportTickets = this.supportTickets
+      .map(t => {
+        const msgs = (t.messages || []).filter(m => !m.timestamp || m.timestamp >= cutoff);
+        if (msgs.length !== (t.messages || []).length) changed = true;
+        return msgs.length === (t.messages || []).length ? t : { ...t, messages: msgs };
+      })
+      .filter(t => { const keep = (t.messages || []).length > 0; if (!keep) changed = true; return keep; });
+    if (changed) saveToStorage('support_tickets', this.supportTickets);
   }
 
   public addSupportMessage(userId: string, userName: string, text: string, sender: 'user' | 'support' = 'user'): void {
