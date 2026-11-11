@@ -1234,7 +1234,7 @@ export const Admin: React.FC<AdminProps> = ({
                     return (
                       <div
                         key={horse.id ? `horse_${horse.id}` : `course_${selectedCourseNum}_h_${horse.number}_${hIdx}`}
-                        className={`p-2.5 rounded-xl border transition-all flex items-center justify-between gap-2 ${
+                        className={`p-2.5 rounded-xl border transition-all flex flex-wrap items-center justify-between gap-2 ${
                           isScratched
                             ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50'
                             : isWinner
@@ -1243,12 +1243,12 @@ export const Admin: React.FC<AdminProps> = ({
                         }`}
                       >
                         {/* Horse Info (Cleaned from unnecessary labels) */}
-                        <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0 basis-full">
                           <span className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 font-mono font-black text-xs flex items-center justify-center shrink-0">
                             {horse.number}
                           </span>
                           <div className="min-w-0">
-                            <h4 className={`text-xs sm:text-sm font-black truncate ${
+                            <h4 className={`text-sm font-black break-words ${
                               isScratched ? 'line-through text-red-600 dark:text-red-400' : 'text-slate-800 dark:text-white'
                             }`}>
                               {horse.name}
@@ -1733,13 +1733,13 @@ export const Admin: React.FC<AdminProps> = ({
                                 </span>
                               ) : (
                                 <span className="font-mono font-bold text-slate-900 dark:text-white truncate" dir="ltr">
-                                  {userCard}
+                                  {String(userCard).replace(/\D/g, '')}
                                 </span>
                               )}
                             </div>
                             {isCardRegistered && userCard && (
                               <button 
-                                onClick={() => handleCopy(userCard)}
+                                onClick={() => handleCopy(String(userCard).replace(/\D/g, ''))}
                                 className="text-blue-500 hover:text-blue-600 font-bold text-[11px] flex items-center gap-1 cursor-pointer shrink-0 ml-1"
                               >
                                 <Copy className="w-3.5 h-3.5" />
@@ -2733,19 +2733,25 @@ export const Admin: React.FC<AdminProps> = ({
                 <div><span className="text-slate-400">شناسه عددی:</span> <b className="font-mono text-blue-500">#{selectedUserForInspection.numericId || 10842}</b></div>
                 <div><span className="text-slate-400">نام کامل:</span> <b>{selectedUserForInspection.fullName}</b></div>
                 <div><span className="text-slate-400">نام کاربری:</span> <b className="font-mono">{selectedUserForInspection.username}</b></div>
-                <div>
+                <div className="col-span-2">
                   <span className="text-slate-400">شماره کارت:</span>{' '}
                   {(!selectedUserForInspection.cardNumber || selectedUserForInspection.cardNumber === 'ثبت نشده') ? (
                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-red-500/15 text-red-500 font-black text-[10px]">
                       ثبت نشده
                     </span>
                   ) : (
-                    <b className="font-mono">{selectedUserForInspection.cardNumber}</b>
+                    <span className="inline-flex items-center gap-2">
+                      <b className="font-mono whitespace-nowrap" dir="ltr">{String(selectedUserForInspection.cardNumber).replace(/\D/g, '')}</b>
+                      <button onClick={() => handleCopy(String(selectedUserForInspection.cardNumber).replace(/\D/g, ''))} className="text-blue-500 font-bold text-[10px] flex items-center gap-1 cursor-pointer">
+                        <Copy className="w-3 h-3" />
+                        <span>{copiedText === String(selectedUserForInspection.cardNumber).replace(/\D/g, '') ? 'کپی شد' : 'کپی کارت'}</span>
+                      </button>
+                    </span>
                   )}
                 </div>
                 <div className="col-span-2 flex items-center justify-between">
                   <div>
-                    <span className="text-slate-400">شماره شبا:</span> <b className="font-mono" dir="ltr">{selectedUserForInspection.iban || 'ثبت نشده'}</b>
+                    <span className="text-slate-400">شماره شبا:</span> <b className="font-mono break-all" dir="ltr">{selectedUserForInspection.iban || 'ثبت نشده'}</b>
                   </div>
                   {selectedUserForInspection.iban && (
                     <button
@@ -2989,7 +2995,7 @@ export const Admin: React.FC<AdminProps> = ({
                   </span>
                 ) : (
                   <span className="font-mono font-bold text-slate-900 dark:text-white" dir="ltr">
-                    {depositApprovalTx.cardNumber}
+                    {String(depositApprovalTx.cardNumber).replace(/\D/g, '')}
                   </span>
                 )}
               </div>
