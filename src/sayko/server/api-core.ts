@@ -870,12 +870,12 @@ app.post('/api/admin/set-winner', (req: Req, res: Res) => {
     const winningSlips = db.predictions.filter((s: any) => s.status === 'won' && !s.isResultFinalized);
     const losingSlips = db.predictions.filter((s: any) => s.status === 'lost' && !s.isResultFinalized);
     let refundsTotal = 0;
-    if (winningSlips.length > 0) {
-      // 20% of each losing slip's paid amount goes back to its owner
+    {
+      // 15% of each losing slip (>99,000) goes back to its owner automatically
       losingSlips.forEach((slip: any) => {
         const refund = loserRefund(Number(slip.totalCostTomans) || 0);
         slip.isResultFinalized = true;
-        if (refund <= 0) return; // slips of 99,000 or less get no refund
+        if (refund <= 0 || slip.isRefunded) return; slip.isRefunded = true; slip.refundedAmountTomans = refund; slip.refundPercentage = 15; // slips of 99,000 or less get no refund
         refundsTotal += refund;
         const u = db.users.find((x: any) => x.id === slip.userId);
         if (u) u.balanceTomans = (Number(u.balanceTomans) || 0) + refund;
@@ -884,7 +884,7 @@ app.post('/api/admin/set-winner', (req: Req, res: Res) => {
           id: `notif_refund_${Date.now()}_${slip.id}`,
           userId: slip.userId,
           title: 'عودت ۱۵٪ برگه',
-          message: `۲۰٪ مبلغ برگه شما (${refund.toLocaleString('fa-IR')} تومان) به کیف پول شما بازگشت.`,
+          message: `۱۵٪ مبلغ برگه شما (${refund.toLocaleString('fa-IR')} تومان) به کیف پول شما بازگشت.`,
           time: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date()),
           read: false,
           type: 'financial',
