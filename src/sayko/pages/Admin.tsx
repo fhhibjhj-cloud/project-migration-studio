@@ -600,7 +600,7 @@ export const Admin: React.FC<AdminProps> = ({
                     {profitData.winnersPayout.toLocaleString('fa-IR')}
                   </span>
                   <span className="text-[9px] text-slate-400">
-                    {profitData.totalWinnersCount > 0 ? 'تومان (۸۶٪)' : 'تومان (۰ برنده)'}
+                    {profitData.totalWinnersCount > 0 ? 'تومان (۷۱٪)' : 'تومان (۰ برنده)'}
                   </span>
                 </div>
 
@@ -613,22 +613,18 @@ export const Admin: React.FC<AdminProps> = ({
                     {profitData.adminProfit.toLocaleString('fa-IR')}
                   </span>
                   <span className="text-[9px] text-emerald-600/80 dark:text-emerald-400/80 font-bold">
-                    {profitData.totalWinnersCount > 0
-                      ? 'تومان (۱۴٪)'
-                      : (store.refundRate > 0
-                          ? `تومان (${100 - store.refundRate}٪ سود سامانه)`
-                          : 'تومان (۱۰۰٪ سود سامانه)')}
+                    {'تومان (۱۴٪ کارمزد سامانه)'}
                   </span>
                 </div>
               </div>
 
               {/* No-winner refund summary banner if applicable */}
-              {profitData.totalWinnersCount === 0 && store.refundRate > 0 && profitData.totalRefundTomans > 0 && (
+              {profitData.totalRefundTomans > 0 && (
                 <div className="mt-3 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-800/50 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <RotateCcw className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                     <span className="font-bold text-amber-800 dark:text-amber-300">
-                      عودت به کاربران به دلیل عدم وجود برنده ({store.refundRate}٪):
+                      عودت خودکار ۱۵٪ برگه‌های بازنده (بالای ۹۹ هزار):
                     </span>
                   </div>
                   <span className="font-mono font-black text-amber-600 dark:text-amber-400 tabular-nums">

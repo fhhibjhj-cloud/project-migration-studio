@@ -40,6 +40,7 @@ import {
   supabase,
   isSupabaseConfigured,
   pruneExpiredData,
+  deleteTransactionFromDb,
 } from './supabase';
 
 export interface Horse {
@@ -968,6 +969,7 @@ export class AppStore {
     saveToStorage('admin_today_profit_reset', this.todayProfitResetTimestamp);
     this.pushLocalChangesToDb();
     this.pushSharedGameState();
+    this.pushCentralWeek();
     this.listeners.forEach((fn) => fn());
   }
 
@@ -977,6 +979,26 @@ export class AppStore {
   private sharedStateLoaded = false;
   private adminWeekEditedAt = 0;
   private withdrawalEditedAt = 0;
+
+  private lastCentralWeekSig = '';
+  private centralWeekPushedAt = 0;
+  private centralWeekLoaded = false;
+  private weekSig(): string {
+    const { totalPoolTomans, ...rest } = this.activeWeek as any;
+    return JSON.stringify(rest);
+  }
+  private pushCentralWeek(): void {
+    if (typeof window === 'undefined' || this.currentUser?.role !== 'admin' || !this.centralWeekLoaded) return;
+    const sig = this.weekSig();
+    if (sig === this.lastCentralWeekSig) return;
+    this.lastCentralWeekSig = sig;
+    this.centralWeekPushedAt = Date.now();
+    fetch('/api/admin/active-week', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ activeWeek: { ...JSON.parse(sig) } }),
+    }).then(() => { this.centralWeekPushedAt = Date.now(); }).catch(() => { this.lastCentralWeekSig = ''; });
+  }
 
   private pushSharedGameState(): void {
     if (!this.sharedStateLoaded) return;
@@ -993,7 +1015,7 @@ export class AppStore {
   }
 
   private applySharedGameState(key: string, value: any): boolean {
-    if (key === 'active_week' && value && Array.isArray(value.courses)) {
+    if (key === 'active_week' && value && Array.isArray(value.courses) && false) {
       // Admin's device is the author of active_week: after the first load never let a stale DB copy overwrite its edits (e.g. a just-set winner)
       if (this.currentUser?.role === 'admin' && this.sharedStateLoaded) return false;
       const str = JSON.stringify(value);
@@ -1747,7 +1769,7 @@ export class AppStore {
   }
 
   // --- WALLET ACTIONS ---
-  public requestDeposit(amountTomans: number): { success: boolean; message: string; tx?: Transaction } {
+  public requestDeposit(amountTomans: number, method: 'telegram' | 'instant' = 'telegram'): { success: boolean; message: string; tx?: Transaction } {
     try {
       if (!this.currentUser || this.currentUser.isGuest) {
         return { success: false, message: 'لطفاً وارد حساب کاربری خود شوید.' };
@@ -1769,7 +1791,8 @@ export class AppStore {
         date: new Intl.DateTimeFormat('fa-IR', { dateStyle: 'short', timeStyle: 'short' }).format(new Date()),
         status: 'pending',
         trackingCode: uniqueId,
-      };
+        method,
+      } as any;
       this.transactions.unshift(tx);
 
       this.notifications.unshift({
@@ -1810,6 +1833,15 @@ export class AppStore {
       console.warn('requestDeposit error in store:', err);
       return { success: false, message: 'خطا در ثبت درخواست افزایش اعتبار.' };
     }
+  }
+
+  /** Removes a transaction (and its uploaded receipt) permanently. */
+  public deleteTransactionPermanently(txId: string): void {
+    this.transactions = this.transactions.filter(t => t.id !== txId);
+    saveToStorage('transactions', this.transactions);
+    deleteTransactionFromDb(txId).catch(() => {});
+    fetch('/api/deposits/receipt-delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ txId }) }).catch(() => {});
+    this.notify();
   }
 
   // --- WITHDRAWAL SCHEDULE & ADMIN CONTROLS ---
@@ -2068,54 +2100,18 @@ export class AppStore {
     const fivePrWinnersCount = fivePrSlips.filter(p => p.status === 'won').length;
     const totalWinnersCount = sixPrWinnersCount + fivePrWinnersCount;
 
-    const currentRefundRate = Number(this.refundRate) || 0;
 
-    let sixPrAdminProfit = 0;
-    let sixPrWinnersPayout = 0;
-    let sixPrReceiptPrize = 0;
-    let sixPrRefundTomans = 0;
+    // 14% site commission is always the platform's profit; 15% auto-refund for losing slips over 99k
+    const sixPrAdminProfit = Math.round(sixPrGrossFund * SITE_COMMISSION_RATE);
+    const sixPrRefundTomans = sixPrSlips.filter(p => p.status === 'lost').reduce((sum, p) => sum + loserRefund(Number(p.totalCostTomans) || 0), 0);
+    const sixPrWinnersPayout = sixPrWinnersCount > 0 ? Math.max(0, sixPrGrossFund - sixPrAdminProfit - sixPrRefundTomans) : 0;
+    const sixPrReceiptPrize = sixPrWinnersCount > 0 ? Math.round(sixPrWinnersPayout / sixPrWinnersCount) : 0;
 
-    if (sixPrWinnersCount > 0) {
-      sixPrAdminProfit = Math.round(sixPrGrossFund * SITE_COMMISSION_RATE);
-      // Losing slips over 99k get 15% back; the remaining 71% goes to winners
-      sixPrRefundTomans = sixPrSlips.filter(p => p.status === 'lost').reduce((sum, p) => sum + loserRefund(Number(p.totalCostTomans) || 0), 0);
-      sixPrWinnersPayout = Math.max(0, sixPrGrossFund - sixPrAdminProfit - sixPrRefundTomans);
-      sixPrReceiptPrize = Math.round(sixPrWinnersPayout / sixPrWinnersCount);
-    } else {
-      // 0 winners in Six-Pareh:
-      // If zero winners across both categories, configured refund is calculated and the rest is strictly platform profit
-      if (totalWinnersCount === 0 && currentRefundRate > 0) {
-        sixPrRefundTomans = Math.round(sixPrGrossFund * (currentRefundRate / 100));
-        sixPrAdminProfit = Math.max(0, sixPrGrossFund - sixPrRefundTomans);
-      } else {
-        sixPrAdminProfit = sixPrGrossFund;
-      }
-      sixPrWinnersPayout = 0;
-      sixPrReceiptPrize = 0; // Explicitly 0 when zero winners
-    }
-
-    let fivePrAdminProfit = 0;
-    let fivePrWinnersPayout = 0;
-    let fivePrReceiptPrize = 0;
-    let fivePrRefundTomans = 0;
-
-    if (fivePrWinnersCount > 0) {
-      fivePrAdminProfit = Math.round(fivePrGrossFund * SITE_COMMISSION_RATE);
-      // Losing slips over 99k get 15% back; the remaining 71% goes to winners
-      fivePrRefundTomans = fivePrSlips.filter(p => p.status === 'lost').reduce((sum, p) => sum + loserRefund(Number(p.totalCostTomans) || 0), 0);
-      fivePrWinnersPayout = Math.max(0, fivePrGrossFund - fivePrAdminProfit - fivePrRefundTomans);
-      fivePrReceiptPrize = Math.round(fivePrWinnersPayout / fivePrWinnersCount);
-    } else {
-      // 0 winners in Five-Pareh:
-      if (totalWinnersCount === 0 && currentRefundRate > 0) {
-        fivePrRefundTomans = Math.round(fivePrGrossFund * (currentRefundRate / 100));
-        fivePrAdminProfit = Math.max(0, fivePrGrossFund - fivePrRefundTomans);
-      } else {
-        fivePrAdminProfit = fivePrGrossFund;
-      }
-      fivePrWinnersPayout = 0;
-      fivePrReceiptPrize = 0; // Explicitly 0 when zero winners
-    }
+    // 14% site commission is always the platform's profit; 15% auto-refund for losing slips over 99k
+    const fivePrAdminProfit = Math.round(fivePrGrossFund * SITE_COMMISSION_RATE);
+    const fivePrRefundTomans = fivePrSlips.filter(p => p.status === 'lost').reduce((sum, p) => sum + loserRefund(Number(p.totalCostTomans) || 0), 0);
+    const fivePrWinnersPayout = fivePrWinnersCount > 0 ? Math.max(0, fivePrGrossFund - fivePrAdminProfit - fivePrRefundTomans) : 0;
+    const fivePrReceiptPrize = fivePrWinnersCount > 0 ? Math.round(fivePrWinnersPayout / fivePrWinnersCount) : 0;
 
     // Combined Gross & Totals
     const grossFund = sixPrGrossFund + fivePrGrossFund;
@@ -2964,7 +2960,12 @@ export class AppStore {
           this.activeWeek.isShishParEnabled = state.activeWeek.isShishParEnabled;
           hasChanges = true;
         }
-        if (Array.isArray(state.activeWeek.courses)) {
+        const adminEditing = this.currentUser?.role === 'admin' && Date.now() - this.centralWeekPushedAt < 6000;
+        if (!adminEditing && state.activeWeek.id && state.activeWeek.id !== this.activeWeek.id) {
+          this.activeWeek.id = state.activeWeek.id;
+          hasChanges = true;
+        }
+        if (Array.isArray(state.activeWeek.courses) && !adminEditing) {
           state.activeWeek.courses.forEach((remoteCourse: Course) => {
             const localCourse = this.activeWeek.courses.find(c => c.number === remoteCourse.number);
             if (localCourse) {
@@ -2985,6 +2986,7 @@ export class AppStore {
         }
       }
 
+      if (!this.centralWeekLoaded) { this.centralWeekLoaded = true; this.lastCentralWeekSig = this.weekSig(); }
       // 2. Sync Predictions (Tickets from all users)
       if (!isSupabaseConfigured && Array.isArray(state.predictions) && state.predictions.length > 0) {
         const localSlipMap = new Map(this.predictions.map(p => [p.id, p]));

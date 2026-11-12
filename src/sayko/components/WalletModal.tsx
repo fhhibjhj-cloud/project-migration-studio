@@ -4,6 +4,7 @@ import { X, ArrowUpRight, ArrowDownLeft, CreditCard, Wallet, ShieldCheck, CheckC
 import { store, UserProfile } from '../lib/store';
 import { formatInputAmount, formatSmartAmountFa } from '../lib/format';
 import { sound } from '../lib/audio';
+import { DepositMethodModal } from './DepositMethodModal';
 
 interface WalletModalProps {
   isOpen: boolean;
@@ -36,6 +37,8 @@ export const WalletModal: React.FC<WalletModalProps> = ({
   const [isWithdrawConfirmOpen, setIsWithdrawConfirmOpen] = useState(false);
   const [lastTxTrackingCode, setLastTxTrackingCode] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [methodPickerOpen, setMethodPickerOpen] = useState(false);
+  const telegramChosenRef = React.useRef(false);
 
   const handleCopy = (text: string, key: string) => {
     try {
@@ -162,6 +165,9 @@ export const WalletModal: React.FC<WalletModalProps> = ({
           sound.playAlert();
           return;
         }
+        if (!telegramChosenRef.current) { setMethodPickerOpen(true); return; }
+        telegramChosenRef.current = false;
+        setMethodPickerOpen(false);
         const persianDate = new Intl.DateTimeFormat('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
         const currentTime = new Intl.DateTimeFormat('fa-IR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date());
         const numericId = currentUser?.numericId || 10842;
@@ -735,6 +741,13 @@ export const WalletModal: React.FC<WalletModalProps> = ({
         </div>
       )}
 
+      <DepositMethodModal
+        isOpen={methodPickerOpen && type === 'deposit'}
+        amount={amount}
+        onClose={() => setMethodPickerOpen(false)}
+        onTelegram={() => { telegramChosenRef.current = true; handleSubmit({ preventDefault() {} } as any); }}
+        onDone={() => { setMethodPickerOpen(false); onClose(); }}
+      />
       {/* SUCCESS POPUP MODAL FOR WITHDRAWAL WITH COPY BUTTONS (Requirement 1.2) */}
       {showWithdrawSuccessModal && (
         <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4 animate-in fade-in duration-150" dir="rtl">

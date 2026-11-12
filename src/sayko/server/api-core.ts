@@ -787,6 +787,17 @@ app.post('/api/admin/countdown', (req: Req, res: Res) => {
   });
 });
 
+// Admin saves the active week (horses, titles, locks, winners) permanently; the shared pool stays server-owned
+app.post('/api/admin/active-week', (req: Req, res: Res) => {
+  const { activeWeek } = req.body;
+  if (!activeWeek || !Array.isArray(activeWeek.courses)) return res.status(400).json({ success: false, message: 'داده نامعتبر' });
+  const db = getDatabase();
+  const pool = Number(db.activeWeek?.totalPoolTomans) || 0;
+  db.activeWeek = { ...db.activeWeek, ...activeWeek, totalPoolTomans: pool };
+  saveDatabase(db);
+  res.json({ success: true, activeWeek: db.activeWeek });
+});
+
 // 14. Admin Controls: "حذف همه" (Delete All)
 // Resets total pool to 0, clears active horses, preserves historical slips
 app.post('/api/admin/clear-all', (req: Req, res: Res) => {
@@ -809,6 +820,7 @@ app.post('/api/admin/clear-all', (req: Req, res: Res) => {
     c.isLocked = false;
   });
   db.activeWeek.totalPoolTomans = 0;
+  db.activeWeek.id = `evt_${Date.now()}`;
 
   saveDatabase(db);
 
@@ -1010,6 +1022,62 @@ app.post('/api/admin/direct-message', (req: Req, res: Res) => {
   res.json({ success: true, message: 'پیام با موفقیت به صندوق کاربر ارسال شد.' });
 });
 
+
+// ===== Instant card-to-card deposits (receipt upload, max 4 waiting at once) =====
+export const INSTANT_QUEUE_LIMIT = 4;
+const pendingReceipts = (db: any) => (db.depositReceipts || []).filter((r: any) => r.status === 'pending');
+
+app.post('/api/deposits/queue', (req: Req, res: Res) => {
+  const db = getDatabase();
+  const { userId } = req.body;
+  const pend = pendingReceipts(db);
+  res.json({ success: true, pending: pend.length, limit: INSTANT_QUEUE_LIMIT, mine: pend.some((r: any) => r.userId === userId) });
+});
+
+app.post('/api/deposits/receipt', (req: Req, res: Res) => {
+  const db = getDatabase();
+  const r = req.body || {};
+  if (!r.txId || !r.userId || !r.image || String(r.image).length > 900000) return res.status(400).json({ success: false, message: 'رسید نامعتبر است.' });
+  if (!db.depositReceipts) db.depositReceipts = [];
+  const pend = pendingReceipts(db);
+  if (pend.length >= INSTANT_QUEUE_LIMIT && !pend.some((x: any) => x.userId === r.userId)) {
+    return res.status(429).json({ success: false, queue: true, message: 'صف کارت‌به‌کارت فوری پر است؛ لطفاً چند دقیقه دیگر دوباره تلاش کنید.' });
+  }
+  const user = (db.users || []).find((u: any) => u.id === r.userId) || {};
+  db.depositReceipts.unshift({
+    txId: r.txId, userId: r.userId,
+    userNumericId: r.userNumericId || user.numericId, userName: r.userName || user.fullName,
+    username: r.username || user.username, phone: r.phone || user.phone,
+    cardNumber: r.cardNumber || user.cardNumber, iban: r.iban || user.iban,
+    amountTomans: Number(r.amountTomans) || 0, trackingCode: r.trackingCode,
+    image: r.image, status: 'pending', createdAt: Date.now(),
+  });
+  saveDatabase(db);
+  res.json({ success: true });
+});
+
+app.post('/api/deposits/receipts', (req: Req, res: Res) => {
+  const db = getDatabase();
+  res.json({ success: true, receipts: db.depositReceipts || [] });
+});
+
+app.post('/api/deposits/receipt-status', (req: Req, res: Res) => {
+  const db = getDatabase();
+  const r = (db.depositReceipts || []).find((x: any) => x.txId === req.body.txId);
+  if (!r) return res.status(404).json({ success: false });
+  r.status = req.body.status === 'approved' ? 'approved' : 'rejected';
+  saveDatabase(db);
+  res.json({ success: true });
+});
+
+app.post('/api/deposits/receipt-delete', (req: Req, res: Res) => {
+  const db = getDatabase();
+  const { txId } = req.body;
+  db.depositReceipts = (db.depositReceipts || []).filter((x: any) => x.txId !== txId);
+  db.transactions = (db.transactions || []).filter((t: any) => t.id !== txId);
+  saveDatabase(db);
+  res.json({ success: true });
+});
 
 export const hasRoute = (method: string, path: string) => Boolean(routes[method + ' ' + path]);
 

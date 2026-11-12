@@ -824,3 +824,11 @@ export async function pruneExpiredData(): Promise<void> {
   ];
   await Promise.allSettled(jobs.map(j => Promise.resolve(j)));
 }
+
+export async function deleteTransactionFromDb(txId: string): Promise<boolean> {
+  if (!supabase) return false;
+  try {
+    const { error } = await supabase.from('transactions').delete().eq('id', txId);
+    return !error;
+  } catch { return false; }
+}
