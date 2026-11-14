@@ -1015,7 +1015,7 @@ export class AppStore {
   }
 
   private applySharedGameState(key: string, value: any): boolean {
-    if (key === 'active_week' && value && Array.isArray(value.courses) && false) {
+    if (key === 'active_week' && value && Array.isArray(value.courses)) {
       // Admin's device is the author of active_week: after the first load never let a stale DB copy overwrite its edits (e.g. a just-set winner)
       if (this.currentUser?.role === 'admin' && this.sharedStateLoaded) return false;
       const str = JSON.stringify(value);
